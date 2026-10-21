@@ -411,7 +411,16 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 
 <script>
 (function(){
-const VERSION = '2026-10-21.6';
+const VERSION = '2026-10-21.7';
+// 看示范视频：跳到 B 站搜索，国内能直接打开
+const DEMO = {db_bench:'哑铃卧推',incline_db:'上斜哑铃卧推',lat_pd:'高位下拉',seated_row:'坐姿绳索划船',lat_raise:'哑铃侧平举',pushdown:'绳索下压',
+  hack:'哈克深蹲',db_rdl:'哑铃罗马尼亚硬拉',leg_press:'倒蹬腿举',seated_curl:'坐姿腿弯举',crunch:'卷腹',assist_pu:'辅助引体向上',one_arm_row:'单臂哑铃划船',
+  db_ohp:'坐姿哑铃推举',machine_press:'器械推胸',cable_raise:'绳索侧平举',face_pull:'绳索面拉',db_curl:'哑铃弯举',hip_thrust:'杠铃臀推',bss:'保加利亚分腿蹲',
+  lying_curl:'俯卧腿弯举',leg_ext:'腿屈伸',calf:'站姿提踵',plank:'平板支撑',rear_fly:'哑铃反向飞鸟',incline_curl:'上斜哑铃弯举',oh_ext:'绳索过头臂屈伸',
+  A1:'枕下肌 网球放松',A2:'上斜方肌 筋膜球放松',A3:'门框 胸大肌拉伸',B1:'上斜方肌拉伸',B2:'肩胛提肌拉伸',B3:'毛巾卷 胸椎伸展',C1:'收下巴 颈深屈肌',
+  C2:'颈部侧屈 等长收缩',C3:'靠墙天使',C4:'俯卧Y字 下斜方',C5:'死虫 核心',C6:'鸟狗式',C7:'臀桥',C8:'髋铰链 木棍',D1:'靠墙站 体态',
+  S1:'胸小肌拉伸',S2:'背阔肌拉伸',S4:'弹力带 肩外旋',S7:'前锯肌 俯卧撑plus'};
+const demoLink = k => DEMO[k] ? '<a class="link" href="https://search.bilibili.com/all?keyword='+encodeURIComponent(DEMO[k]+' 教学')+'" target="_blank" rel="noopener">看示范视频 →</a>' : '';
 const START = {db_bench:'每只 7.5–10 kg',incline_db:'每只 6–8 kg',lat_pd:'25–35 kg',seated_row:'25–35 kg',lat_raise:'每只 2–4 kg',pushdown:'10–15 kg',
   hack:'空机器（滑台本身就有重量）',db_rdl:'每只 8–12 kg',leg_press:'每边 10–20 kg',seated_curl:'15–25 kg',assist_pu:'辅助 30–40 kg',one_arm_row:'10–14 kg',
   db_ohp:'每只 6–8 kg',machine_press:'20–30 kg',cable_raise:'2.5–5 kg',face_pull:'10–15 kg',db_curl:'每只 6–8 kg',hip_thrust:'空杆 20 kg（或臀推机最轻档）',
@@ -503,7 +512,7 @@ const MV = {
   S4:['肩-4 外旋','弹力带或绳索固定在肚脐高度，侧身站，练的那只手离固定点远：大臂贴身、腋下夹一条毛巾、屈肘 90°，前臂横在肚子前握住带子。以手肘为轴，把前臂像开门一样往外转 45–60°，停 1 秒慢慢回。毛巾不掉，别耸肩，别转身。'],
   S7:['肩-7 前锯肌靠墙推','面墙，前臂贴墙，手肘约和肩一样高。手臂不动，把胸口推离墙，让两块肩胛骨往前、往两边分开，上背微微拱起，停 2 秒，慢慢回。别耸肩，别塌腰。']
 };
-const mvList = (pre, list) => list.map(([k, dose]) => '<details class="mv" data-keep="'+pre+':'+k+'"><summary>'+MV[k][0]+' · '+dose+'</summary><div>'+MV[k][1]+'</div></details>').join('');
+const mvList = (pre, list) => list.map(([k, dose]) => '<details class="mv" data-keep="'+pre+':'+k+'"><summary>'+MV[k][0]+' · '+dose+'</summary><div>'+MV[k][1]+' '+demoLink(k)+'</div></details>').join('');
 const HOW_KEGEL = '<div>找肌肉：小便时试着中途憋住，用到的就是它（只用来找感觉，平时别在小便时练）。</div><ol><li>慢收：收紧 5 秒，完全放松 5 秒，做 10 次。坚持 4 周后改成 10 秒。</li><li>快收：收 1 秒、放 1 秒，做 10 次。</li><li>别憋气；屁股、大腿、肚子都不用力；放松要和收紧一样彻底。</li></ol>';
 const HOW_MIN = pre => '<div>点开每个动作看做法。</div>'+mvList(pre, [['B1','30 秒 × 2'],['B2','30 秒 × 2'],['C1','10 次 × 3']]);
 const HOW_WARM = (pre, upper) => '<div>先骑 5 分钟单车，再按顺序每个动作做 1 组；最后用轻重量做第一个训练动作的热身组：10 次，然后 5 次。</div>'+mvList(pre, [['C1','10 次'],['C3','10 次'],['C4','12 次'],['C5','每边 8 次'],['C6','每边 10 次'],['C7','15 次'],['C8','12 次']].concat(upper ? [['S4','每边 15 次 × 2'],['S7','12 次 × 2']] : []));
@@ -1082,7 +1091,7 @@ function renderTrain(){
     const alt = ALT[ex.id] ? '<div>器械被占用就换：'+esc(ALT[ex.id])+'。</div>' : '';
     return '<div class="card" id="ex-'+ex.id+'"><div class="ex-head"><h3>'+esc(ex.n)+'</h3><span class="target">'+n+' × '+(ex.lo===ex.hi?ex.lo:ex.lo+'–'+ex.hi)+(ex.noW?' 秒':'')+'</span></div>'+note+warm+
       '<p class="last" data-last="'+ex.id+'"></p><p class="hint" data-hint="'+ex.id+'"></p>'+
-      '<details class="how"><summary>动作要点</summary><div>'+esc(CUE[ex.id]||'')+'</div>'+alt+'</details>'+
+      '<details class="how"><summary>动作要点</summary><div>'+esc(CUE[ex.id]||'')+' '+demoLink(ex.id)+'</div>'+alt+'</details>'+
       '<div class="sets">'+rows+'</div><p class="small muted">'+restText(ex)+(POSE[ex.id] ? ' · <a class="link" href="pose.html?ex='+POSE[ex.id]+'">拍视频检查动作</a>' : '')+'</p></div>';
   }).join('') + '<div class="card"><h3>练完</h3><p class="muted">'+esc(p.after)+'</p></div>';
   updateLastInfo();
