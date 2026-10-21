@@ -58,6 +58,7 @@ input:focus-visible,button:focus-visible,summary:focus-visible,textarea:focus-vi
 button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 12px}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
 button.link{background:none;border:0;padding:4px 0;color:var(--accent);font-size:13px;font-weight:600;align-self:flex-start}
+a.link{color:var(--accent);font-size:13px;font-weight:600;text-decoration:none}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .chip{flex:0 0 auto;padding:6px 12px;border-radius:999px;font-size:13px}
 .chip[aria-pressed="true"],.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
@@ -199,7 +200,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
   </section>
 
   <section class="tab" id="tab-train" hidden>
-    <div class="row small muted"><span id="trainDateLabel"></span><button type="button" class="link" id="trainDateBtn"></button><input type="date" id="trainDate" hidden aria-label="补记哪天的训练"></div>
+    <div class="row small muted"><span id="trainDateLabel"></span><button type="button" class="link" id="trainDateBtn"></button><input type="date" id="trainDate" hidden aria-label="补记哪天的训练"><a class="link" href="pose.html" style="margin-left:auto">拍视频分析动作 →</a></div>
     <div class="chips" id="dayChips" role="group" aria-label="选择训练"></div>
     <div class="phase"><b id="phaseName"></b><span id="phaseText"></span></div>
     <div id="trainBody" style="display:flex;flex-direction:column;gap:12px"></div>
@@ -406,7 +407,8 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 
 <script>
 (function(){
-const VERSION = '2026-10-21.3';
+const VERSION = '2026-10-21.4';
+const POSE = {hack:'squat', db_rdl:'rdl', hip_thrust:'thrust', seated_row:'row', one_arm_row:'row', lat_raise:'raise', cable_raise:'raise', plank:'plank'};
 const WD = ['周日','周一','周二','周三','周四','周五','周六'];
 const SEQ = [1,2,4,5,6];
 const COMPOUND = new Set(['db_bench','incline_db','lat_pd','seated_row','hack','db_rdl','leg_press','assist_pu','one_arm_row','db_ohp','machine_press','hip_thrust','bss']);
@@ -499,7 +501,7 @@ const HOW_MIN = pre => '<div>点开每个动作看做法。</div>'+mvList(pre, [
 const HOW_WARM = (pre, upper) => '<div>先骑 5 分钟单车，再按顺序每个动作做 1 组；最后用轻重量做第一个训练动作的热身组：10 次，然后 5 次。</div>'+mvList(pre, [['C1','10 次'],['C3','10 次'],['C4','12 次'],['C5','每边 8 次'],['C6','每边 10 次'],['C7','15 次'],['C8','12 次']].concat(upper ? [['S4','每边 15 次 × 2'],['S7','12 次 × 2']] : []));
 const HOW_PM = (pre, upper) => '<div>实在没时间，最少做 B1、B2 和收下巴。</div>'+mvList(pre, [['A1','90 秒'],['A2','90 秒'],['A3','每边 30 秒 × 2'],['B1','30 秒 × 2'],['B2','30 秒 × 2'],['B3','90 秒'],['C2','8 次 × 2'],['D1','30 秒 × 2']].concat(upper ? [['S1','每边 30 秒'],['S2','每边 30 秒 × 2']] : []));
 const HOW_FULL = pre => '<div>按顺序：松解 → 拉伸 → 激活 → 整合。</div>'+mvList(pre, [['A1','90 秒'],['A2','90 秒'],['A3','每边 30 秒 × 2'],['B1','30 秒 × 2'],['B2','30 秒 × 2'],['B3','90 秒'],['C1','10 次 × 3'],['C2','8 次 × 2'],['C3','10 次 × 2–3'],['C4','12 次 × 2'],['C5','每边 8 次 × 2'],['C6','每边 10 次 × 2'],['C7','15 次 × 2'],['C8','12 次 × 2'],['D1','30 秒 × 2']]);
-const HOW_TEST = '<ol><li>靠墙站：脚跟离墙 5 cm，屁股、上背贴墙，自然站，量后脑勺离墙几厘米。</li><li>仰卧肩高：平躺放松，量两边肩膀后侧离地面多高。</li><li>颈部侧倒：坐直，耳朵往肩膀倒，比较左右哪边更紧。</li><li>俯卧撑 Plus：从背后录几个面墙俯卧撑，看肩胛骨内侧缘有没有翘起。</li></ol><div>结果告诉 Claude，会帮你记进体态计划的自测表。</div>';
+const HOW_TEST = '<ol><li>拍一张侧面站姿照、一张正面站姿照，用动作分析自动量头前伸、骨盆前顶和两肩高低：<a class="link" href="pose.html?ex=postureSide">侧面照</a> · <a class="link" href="pose.html?ex=postureFront">正面照</a></li><li>靠墙站：脚跟离墙 5 cm，屁股、上背贴墙，自然站，量后脑勺离墙几厘米。</li><li>仰卧肩高：平躺放松，量两边肩膀后侧离地面多高。</li><li>颈部侧倒：坐直，耳朵往肩膀倒，比较左右哪边更紧。</li><li>俯卧撑 Plus：从背后录几个面墙俯卧撑，看肩胛骨内侧缘有没有翘起。</li></ol><div>结果告诉 Claude，会帮你记进体态计划的自测表。</div>';
 const SHOP = [
   ['每周日买', [['w1','去皮鸡腿肉 800g'],['w2','鸡胸肉 500g'],['w3','牛腱 600g'],['w4','鸡蛋 30 个（够 1.5 周）'],['w5','无糖或希腊酸奶 7 杯'],['w6','北豆腐 1 盒'],['w7','红薯或紫薯 1.5kg'],['w8','土豆 2 个'],['w9','番茄 7 个'],['w10','胡萝卜 3 根'],['w11','青椒 3 个'],['w12','菠菜 1 小把（周一、周二吃完）'],['w13','香蕉 7 根，生熟搭配']]],
   ['一个月买一次', [['m1','大米 + 糙米（每周约 850g 生米）'],['m2','荞麦面 1 包'],['m3','常温纯牛奶 1 箱'],['m4','每日坚果'],['m5','乳清蛋白粉（2 磅约一个月）'],['m6','黑咖啡'],['m7','冷冻虾仁 500g'],['m8','冷冻蓝莓 1 袋'],['m9','冷冻西兰花 1kg']]],
@@ -891,8 +893,9 @@ function renderBackupInfo(){
 }
 function markBackup(){ DB.backupAt = TODAY; persist(); renderBackupInfo(); renderToday(); }
 function pickSince(o, since){ const r = {}; Object.keys(o || {}).forEach(k => { if (k >= since) r[k] = o[k]; }); return r; }
-function recentText(){ return JSON.stringify({type:'薄肌计划·最近两周', version:VERSION, exported:TODAY, start:DB.start, body:pickSince(DB.body, daysAgo(27)), workouts:pickSince(DB.workouts, daysAgo(13)), checks:pickSince(DB.checks, daysAgo(13))}); }
-function fullText(){ return JSON.stringify({type:'薄肌计划·完整备份', version:VERSION, exported:TODAY, v:1, start:DB.start, body:DB.body, workouts:DB.workouts, checks:DB.checks, shop:DB.shop, backupAt:DB.backupAt}); }
+function poseHist(){ try { const h = JSON.parse(localStorage.getItem('boji:pose') || '[]'); return Array.isArray(h) ? h : []; } catch(e){ return []; } }
+function recentText(){ return JSON.stringify({type:'薄肌计划·最近两周', version:VERSION, exported:TODAY, start:DB.start, body:pickSince(DB.body, daysAgo(27)), workouts:pickSince(DB.workouts, daysAgo(13)), checks:pickSince(DB.checks, daysAgo(13)), pose:poseHist().filter(x => x.date >= daysAgo(13))}); }
+function fullText(){ return JSON.stringify({type:'薄肌计划·完整备份', version:VERSION, exported:TODAY, v:1, start:DB.start, body:DB.body, workouts:DB.workouts, checks:DB.checks, shop:DB.shop, backupAt:DB.backupAt, pose:poseHist()}); }
 function copyOut(text, okMsg){
   const box = $('#dataBox');
   const fallback = () => { box.value = text; box.hidden = false; box.focus(); box.select(); toast('自动复制没成功：长按下面的文字，全选后复制'); };
@@ -943,6 +946,7 @@ $('#confirmImport').addEventListener('click', () => {
   const o = pendingImport; if (!o) return;
   DB.start = o.start || null; DB.body = o.body || {}; DB.workouts = o.workouts || {}; DB.checks = o.checks || {}; DB.shop = o.shop || {}; DB.backupAt = o.backupAt || null;
   if (!persist()) return;
+  if (Array.isArray(o.pose)) { try { localStorage.setItem('boji:pose', JSON.stringify(o.pose.slice(-60))); } catch(e){} }
   syncState(); state.trainDate = TODAY; state.draft = null; loadDraft();
   renderAll();
   $('#cancelImport').click();
@@ -1035,7 +1039,7 @@ function renderTrain(){
     return '<div class="card" id="ex-'+ex.id+'"><div class="ex-head"><h3>'+esc(ex.n)+'</h3><span class="target">'+n+' × '+(ex.lo===ex.hi?ex.lo:ex.lo+'–'+ex.hi)+(ex.noW?' 秒':'')+'</span></div>'+note+warm+
       '<p class="last" data-last="'+ex.id+'"></p><p class="hint" data-hint="'+ex.id+'"></p>'+
       '<details class="how"><summary>动作要点</summary><div>'+esc(CUE[ex.id]||'')+'</div>'+alt+'</details>'+
-      '<div class="sets">'+rows+'</div><p class="small muted">'+restText(ex)+'</p></div>';
+      '<div class="sets">'+rows+'</div><p class="small muted">'+restText(ex)+(POSE[ex.id] ? ' · <a class="link" href="pose.html?ex='+POSE[ex.id]+'">拍视频检查动作</a>' : '')+'</p></div>';
   }).join('') + '<div class="card"><h3>练完</h3><p class="muted">'+esc(p.after)+'</p></div>';
   updateLastInfo();
 }

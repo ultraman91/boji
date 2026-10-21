@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>动作分析 · 薄肌计划</title>
+<meta name="theme-color" content="#1C7553">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="薄肌计划">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Layout: one phone-width column; result card holds the key frame canvas and the rep table */
+:root{
+  --bg:#F2F5F3; --surface:#FFFFFF; --fg:#15201B; --muted:#5B6A63; --line:#D9E1DC;
+  --accent:#1C7553; --accent-fg:#FFFFFF; --accent-soft:#E0F0E8; --warn:#9A5D0B; --warn-soft:#FAEFD9; --bad:#B23A2E;
+  --f-body:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  --f-num:"DIN Alternate","Roboto Condensed","Arial Narrow",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1311; --surface:#161F1B; --fg:#E2EBE6; --muted:#90A199; --line:#28342F;
+  --accent:#4FC394; --accent-fg:#06140E; --accent-soft:#183026; --warn:#E2A748; --warn-soft:#352812; --bad:#F07A6C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1311; --surface:#161F1B; --fg:#E2EBE6; --muted:#90A199; --line:#28342F;
+  --accent:#4FC394; --accent-fg:#06140E; --accent-soft:#183026; --warn:#E2A748; --warn-soft:#352812; --bad:#F07A6C; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:0 calc(40px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:calc(12px + env(safe-area-inset-top,0px)) 10px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px}
+.top h1{margin:0;font-size:20px;font-weight:700}
+.top a{color:var(--accent);text-decoration:none;font-size:14px;font-weight:600}
+h3{margin:0;font-size:15px;font-weight:700}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input[type=file]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;max-width:100%}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:8px 14px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{font-size:13px;background:var(--accent-soft);border-radius:10px;padding:8px 10px}
+.bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.find{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.find li{display:grid;grid-template-columns:22px 1fr;gap:6px;font-size:14px;align-items:start}
+.find b{font-family:var(--f-num);text-align:center;border-radius:6px;font-size:13px;line-height:20px}
+.find .good b{background:var(--accent-soft);color:var(--accent)}
+.find .warn b{background:var(--warn-soft);color:var(--warn)}
+.find .bad b{background:var(--warn-soft);color:var(--bad)}
+.find .info b{color:var(--muted)}
+.find .info span{color:var(--muted);font-size:13px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.chip{flex:0 0 auto;padding:5px 12px;border-radius:999px;font-size:13px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+canvas{width:100%;height:auto;border-radius:10px;background:#000;display:block}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px;border-top:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;border-top:0}
+.hist{display:flex;flex-direction:column}
+.hist div{padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.hist div:first-child{border-top:0}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 60px);background:var(--fg);color:var(--bg);font-size:13px;padding:7px 14px;border-radius:99px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:7;max-width:calc(100% - 32px)}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top" style="padding-inline:16px;max-width:560px;margin:0 auto">
+  <a href="./">← 计划</a><h1>动作分析</h1>
+</header>
+<div class="wrap" style="padding-top:14px">
+  <div class="card">
+    <h3>1. 选动作</h3>
+    <select id="ex" aria-label="选择要分析的动作"></select>
+    <p class="note" id="film"></p>
+  </div>
+
+  <div class="card">
+    <h3 id="pickTitle">2. 选一段视频</h3>
+    <input type="file" id="file" accept="video/*" aria-label="选择视频或照片">
+    <div class="row"><button type="button" class="primary" id="go" disabled>开始分析</button><button type="button" id="stop" hidden>取消</button></div>
+    <div class="bar" id="bar" hidden><i></i></div>
+    <p class="small muted" id="status">视频只在你的手机上处理，不会上传到任何地方。第一次用要下载约 20MB 的识别模型，建议连 Wi‑Fi，之后就不用再下了。</p>
+  </div>
+
+  <div class="card" id="result" hidden>
+    <h3 id="rTitle"></h3>
+    <ul class="find" id="findings"></ul>
+    <div class="chips" id="repChips"></div>
+    <canvas id="cv" aria-label="关键帧和关节角度"></canvas>
+    <p class="small muted" id="cvNote"></p>
+    <div class="tablewrap" id="tableWrap"></div>
+    <div class="row"><button type="button" class="primary" id="copy">复制结果（发给 Claude）</button><button type="button" id="saveImg">保存这张图</button></div>
+  </div>
+
+  <div class="card">
+    <h3>以前的分析</h3>
+    <div class="hist" id="hist"><p class="small muted">分析过的结果会存在这里，方便对比有没有进步。</p></div>
+  </div>
+
+  <div class="card">
+    <h3>能看出什么，看不出什么</h3>
+    <ul class="small">
+      <li>能看出：蹲的深度、上身前倾、膝盖弯了多少、臀推有没有顶到位、划船晃没晃和耸没耸肩、侧平举的高度和左右差别、平板支撑塌没塌腰、站姿的头前伸和骨盆前顶，还有每次下放用了几秒。</li>
+      <li>看不出：腰椎有没有弯、膝盖有没有内扣（要正面拍才行）、脚底用力的位置。这些看关键帧自己检查，或者把截图发给 Claude。</li>
+      <li>手机拍的是平面画面，角度误差大约 5–10°。拍摄角度越正，结果越准；同一个动作用同样的拍法对比，最能看出进步。</li>
+    </ul>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+import { EXERCISES, toPx, analyzeVideo, analyzePhoto } from './pose-core.js';
+
+const MP_VER = '0.10.35';
+const LOCAL = './pose/';
+const CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + MP_VER + '/';
+const MODEL_CDN = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task';
+const FPS = 12, MAX_SEC = 90, HIST_KEY = 'boji:pose';
+
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+const pad = n => String(n).padStart(2, '0');
+const today = () => { const d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+const md = s => { const [, m, d] = s.split('-'); return Number(m)+'/'+Number(d); };
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200); }
+
+/* ---------- exercise picker ---------- */
+const sel = $('#ex');
+sel.innerHTML = Object.entries(EXERCISES).map(([k, e]) => '<option value="'+k+'">'+e.name+'（'+e.view+'）</option>').join('');
+let saved = null; try { saved = localStorage.getItem('boji-pose-ex'); } catch(e){}
+sel.value = EXERCISES[params.get('ex')] ? params.get('ex') : (EXERCISES[saved] ? saved : 'squat');
+function onEx(){
+  const e = EXERCISES[sel.value];
+  $('#film').textContent = e.film;
+  $('#pickTitle').textContent = e.photo ? '2. 选一张照片' : '2. 选一段视频（一组，10–40 秒）';
+  $('#file').accept = e.photo ? 'image/*' : 'video/*';
+  $('#file').value = ''; $('#go').disabled = !params.get('src');
+  try { localStorage.setItem('boji-pose-ex', sel.value); } catch(e){}
+  renderHist();
+}
+sel.addEventListener('change', onEx);
+$('#file').addEventListener('change', () => { $('#go').disabled = !$('#file').files.length; });
+
+/* ---------- engine: self-hosted files first, CDN as fallback ---------- */
+let engine = null, mode = null, tsBase = 0;
+async function exists(url){ try { const r = await fetch(url, {method:'HEAD', cache:'no-store'}); return r.ok; } catch(e){ return false; } }
+async function loadEngine(){
+  if (engine) return engine;
+  status('正在加载识别模型（第一次约 20MB）…');
+  const local = await exists(LOCAL + 'pose_landmarker_full.task');
+  const base = local ? LOCAL : CDN;
+  const mod = await import(base + 'vision_bundle.mjs');
+  const files = await mod.FilesetResolver.forVisionTasks(base + 'wasm');
+  const model = local ? LOCAL + 'pose_landmarker_full.task' : MODEL_CDN;
+  const opts = d => ({baseOptions:{modelAssetPath:model, delegate:d}, runningMode:'VIDEO', numPoses:1, minPoseDetectionConfidence:0.5, minPosePresenceConfidence:0.5, minTrackingConfidence:0.5});
+  let lm;
+  try { lm = await mod.PoseLandmarker.createFromOptions(files, opts('GPU')); }
+  catch(e){ lm = await mod.PoseLandmarker.createFromOptions(files, opts('CPU')); }
+  engine = lm; mode = 'VIDEO';
+  return engine;
+}
+async function setMode(m){ if (mode !== m){ await engine.setOptions({runningMode:m}); mode = m; } }
+
+/* ---------- processing ---------- */
+let stopFlag = false, wake = null;
+function status(t){ $('#status').textContent = t; }
+function progress(x){ $('#bar').hidden = x == null; if (x != null) $('#bar i').style.width = Math.round(x*100)+'%'; }
+async function keepAwake(on){ try { if (on && navigator.wakeLock && !wake) wake = await navigator.wakeLock.request('screen'); if (!on && wake){ wake.release(); wake = null; } } catch(e){ wake = null; } }
+const once = (el, ev, ms) => new Promise(res => { let done = false; const f = () => { if (!done){ done = true; el.removeEventListener(ev, f); res(true); } }; el.addEventListener(ev, f); if (ms) setTimeout(() => { if (!done){ done = true; el.removeEventListener(ev, f); res(false); } }, ms); });
+async function seek(v, t){ v.currentTime = Math.min(t, Math.max(0, v.duration - 0.05)); await once(v, 'seeked', 3000); }
+
+let last = null;   // {kind, src, W, H, frames, res, ex}
+async function run(){
+  const ex = sel.value, meta = EXERCISES[ex];
+  const file = $('#file').files[0], testSrc = params.get('src');
+  if (!file && !testSrc) return;
+  $('#go').disabled = true; $('#stop').hidden = false; stopFlag = false; $('#result').hidden = true;
+  await keepAwake(true);
+  try {
+    await loadEngine();
+    if (meta.photo){
+      status('正在识别照片…'); progress(0.5);
+      const img = new Image(); if (testSrc) img.crossOrigin = 'anonymous';
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = testSrc || URL.createObjectURL(file); });
+      await setMode('IMAGE');
+      const out = engine.detect(img);
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const p = out.landmarks && out.landmarks[0] ? toPx(out.landmarks[0], W, H) : null;
+      const res = analyzePhoto(ex, p);
+      last = {kind:'photo', src:img, W, H, frames:[{t:0, p}], res, ex};
+    } else {
+      const v = document.createElement('video');
+      v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto';
+      if (testSrc) v.crossOrigin = 'anonymous';
+      v.src = testSrc || URL.createObjectURL(file);
+      await once(v, 'loadedmetadata', 15000);
+      try { await v.play(); v.pause(); } catch(e){}
+      const dur = Math.min(v.duration || 0, MAX_SEC);
+      if (!dur) throw new Error('video');
+      await setMode('VIDEO');
+      const frames = [], n = Math.floor(dur * FPS);
+      for (let i = 0; i <= n; i++){
+        if (stopFlag) break;
+        const t = i / FPS;
+        await seek(v, t);
+        const out = engine.detectForVideo(v, tsBase + Math.round(t*1000) + 1);
+        frames.push({t, p: out.landmarks && out.landmarks[0] ? toPx(out.landmarks[0], v.videoWidth, v.videoHeight) : null});
+        if (i % 3 === 0){ progress(i / n); status('正在分析第 '+Math.round(t)+' / '+Math.round(dur)+' 秒…'); }
+      }
+      tsBase += Math.round(dur*1000) + 1000;
+      if (stopFlag){ status('已取消。'); return; }
+      const res = analyzeVideo(ex, frames);
+      last = {kind:'video', src:v, W:v.videoWidth, H:v.videoHeight, frames, res, ex};
+      if ((v.duration || 0) > MAX_SEC) toast('视频超过 90 秒，只分析了前 90 秒');
+    }
+    await showResult();
+  } catch(e){
+    console.error(e);
+    status(engine ? '这个文件读不出来。换一段视频或照片再试（支持手机相机拍的 mp4 / mov / jpg）。' : '识别模型没下载成功。检查网络后再点一次「开始分析」。');
+  } finally {
+    progress(null); $('#stop').hidden = true; $('#go').disabled = !($('#file').files.length || testSrc); keepAwake(false);
+  }
+}
+$('#go').addEventListener('click', run);
+$('#stop').addEventListener('click', () => { stopFlag = true; });
+
+/* ---------- results ---------- */
+const MARK = {good:'✓', warn:'!', bad:'!!', info:'·'};
+let curRep = 1;
+async function showResult(){
+  const {res, ex} = last;
+  $('#result').hidden = false;
+  if (!res.ok){
+    $('#rTitle').textContent = '没分析出来';
+    $('#findings').innerHTML = '<li class="warn"><b>!</b><span>'+res.msg+'</span></li>';
+    $('#repChips').innerHTML = ''; $('#tableWrap').innerHTML = ''; $('#cv').hidden = true; $('#cvNote').textContent = '';
+    $('#copy').hidden = true; $('#saveImg').hidden = true;
+    status('没分析出来，按上面的提示重拍一段试试。');
+    return;
+  }
+  $('#copy').hidden = false; $('#saveImg').hidden = false; $('#cv').hidden = false;
+  const n = res.reps.length;
+  $('#rTitle').textContent = EXERCISES[ex].name + (n ? ' · 认出 '+n+' 次' : '');
+  $('#findings').innerHTML = res.findings.map(f => '<li class="'+f.lv+'"><b>'+MARK[f.lv]+'</b><span>'+f.t+'</span></li>').join('');
+  $('#tableWrap').innerHTML = res.table ? '<table><thead><tr>'+res.table.head.map(h => '<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+res.table.rows.map(r => '<tr>'+r.map(c => '<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table>' : '';
+  curRep = res.keyRep || 1;
+  $('#repChips').innerHTML = n > 1 ? res.reps.map(r => '<button type="button" class="chip" data-rep="'+r.n+'" aria-pressed="'+(r.n===curRep)+'">第 '+r.n+' 次</button>').join('') : '';
+  await drawKey();
+  saveHist(ex, res);
+  status('分析完成。'+(n > 1 ? '默认显示问题最明显的那一次，点上面的「第几次」切换。' : ''));
+}
+$('#repChips').addEventListener('click', async e => {
+  const b = e.target.closest('[data-rep]'); if (!b) return;
+  curRep = Number(b.dataset.rep);
+  document.querySelectorAll('#repChips .chip').forEach(c => c.setAttribute('aria-pressed', String(Number(c.dataset.rep) === curRep)));
+  await drawKey();
+});
+async function drawKey(){
+  const {res, frames, src, W, H, kind} = last;
+  const key = res.keys[Math.min(res.keys.length, Math.max(1, curRep)) - 1];
+  const f = frames[key.i];
+  if (kind === 'video') await seek(src, f.t);
+  const cv = $('#cv'), s = Math.min(1, 900 / Math.max(W, H));
+  cv.width = Math.round(W*s); cv.height = Math.round(H*s);
+  const c = cv.getContext('2d');
+  c.drawImage(src, 0, 0, cv.width, cv.height);
+  const p = f.p; if (!p) return;
+  const P = i => ({x:p[i].x*s, y:p[i].y*s});
+  const lw = Math.max(2, cv.width/180);
+  c.lineCap = 'round';
+  const dashed = (x1, y1, x2, y2) => { c.save(); c.setLineDash([lw*3, lw*2]); c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = lw*0.7; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); c.restore(); };
+  if (key.hline != null){ const y = P(key.hline).y; dashed(0, y, cv.width, y); }
+  if (key.plumb != null){ const x = P(key.plumb).x; dashed(x, 0, x, cv.height); }
+  if (key.guide){ const a = P(key.guide[0]), b = P(key.guide[1]); dashed(a.x, a.y, b.x, b.y); }
+  c.strokeStyle = '#4FC394'; c.lineWidth = lw;
+  key.lines.forEach(([a, b]) => { if (p[a].v < 0.3 || p[b].v < 0.3) return; const A = P(a), B = P(b); c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke(); });
+  c.fillStyle = '#FFFFFF';
+  new Set(key.lines.flat()).forEach(i => { if (p[i].v < 0.3) return; const A = P(i); c.beginPath(); c.arc(A.x, A.y, lw*1.3, 0, Math.PI*2); c.fill(); });
+  const fs = Math.max(13, Math.round(cv.width/32));
+  c.font = '600 '+fs+'px "PingFang SC","Microsoft YaHei",sans-serif'; c.textBaseline = 'middle';
+  key.labels.forEach(([i, text]) => {
+    const A = P(i), w = c.measureText(text).width + fs*0.8, h = fs*1.5;
+    let x = A.x + fs*0.8, y = A.y - h/2;
+    if (x + w > cv.width) x = A.x - w - fs*0.8;
+    y = Math.max(2, Math.min(cv.height - h - 2, y));
+    c.fillStyle = 'rgba(13,19,17,.78)'; c.fillRect(x, y, w, h);
+    c.fillStyle = '#FFFFFF'; c.fillText(text, x + fs*0.4, y + h/2);
+  });
+  $('#cvNote').textContent = kind === 'video' ? '第 '+f.t.toFixed(1)+' 秒的画面。绿线是认出的身体线条，白色虚线是参考线。' : '绿线是认出的身体线条，白色竖虚线是过脚踝的铅垂线。';
+}
+
+/* ---------- copy, save image, history ---------- */
+function resultText(){
+  const {res, ex} = last;
+  const lines = ['动作分析 · '+EXERCISES[ex].name+' · '+md(today())];
+  if (res.table){ lines.push(res.table.head.join(' / ')); res.table.rows.forEach(r => lines.push(r.join(' / '))); }
+  res.findings.forEach(f => lines.push((f.lv === 'good' ? '[好] ' : f.lv === 'info' ? '[注] ' : '[改] ') + f.t));
+  return lines.join('\n');
+}
+$('#copy').addEventListener('click', () => {
+  const text = resultText();
+  const ok = () => toast('已复制，粘贴发给 Claude，再附上这张图更好');
+  try { navigator.clipboard.writeText(text).then(ok, () => prompt('长按复制：', text)); } catch(e){ toast('复制没成功，可以直接截图发'); }
+});
+$('#saveImg').addEventListener('click', () => {
+  $('#cv').toBlob(blob => {
+    if (!blob){ toast('保存没成功，直接截图也行'); return; }
+    const file = new File([blob], 'boji-'+last.ex+'-'+today()+'.png', {type:'image/png'});
+    try { if (navigator.canShare && navigator.canShare({files:[file]})){ navigator.share({files:[file]}).catch(() => {}); return; } } catch(e){}
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  }, 'image/png');
+});
+function loadHist(){ try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch(e){ return []; } }
+function saveHist(ex, res){
+  const h = loadHist();
+  h.push({date:today(), ex, n:res.reps.length, metrics:res.metrics, issues:res.findings.filter(f => f.lv === 'warn' || f.lv === 'bad').map(f => f.t.split('：')[0].split('（')[0])});
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(-60))); } catch(e){}
+  renderHist();
+}
+function renderHist(){
+  const h = loadHist().filter(x => x.ex === sel.value).slice(-8).reverse();
+  $('#hist').innerHTML = h.length ? h.map(x => '<div><b>'+md(x.date)+'</b>　'+Object.entries(x.metrics || {}).map(([k, v]) => k+' '+v).join(' · ')+(x.issues && x.issues.length ? '<br><span class="muted">要改：'+x.issues.join('；')+'</span>' : '<br><span class="muted">没发现明显问题</span>')+'</div>').join('') : '<p class="small muted">这个动作还没分析过。分析过的结果会存在这里，方便对比有没有进步。</p>';
+}
+
+onEx();
+if (params.get('src')) $('#go').disabled = false;
+</script>
+</body>
+</html>
