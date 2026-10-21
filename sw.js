@@ -1,5 +1,5 @@
 // 先走网络，断网时用上次缓存的页面；这样健身房信号差也能打开
-const CACHE = 'boji-v1';
+const CACHE = 'boji-v2';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png'];
 
 self.addEventListener('install', e => {

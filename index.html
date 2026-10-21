@@ -44,7 +44,7 @@ p{margin:0}
 .muted{color:var(--muted)}
 .small{font-size:13px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0;scroll-margin-top:80px}
-.banner{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13px}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:6px}
 .phase{display:flex;gap:10px;align-items:baseline;background:var(--accent-soft);border-radius:12px;padding:10px 12px;font-size:13px}
 .phase b{color:var(--accent);font-weight:700;white-space:nowrap}
 .stagenote{font-size:13px;background:var(--accent-soft);border-radius:10px;padding:8px 10px}
@@ -78,11 +78,16 @@ button.link{background:none;border:0;padding:4px 0;color:var(--accent);font-size
 .check .lb{font-size:14px;font-weight:700}
 .check .v{min-width:0;font-size:14px;display:flex;flex-direction:column;gap:6px}
 .check .v > label{cursor:pointer}
-.check.done .lb,.check.done .v > label{color:var(--muted)}
-.check.done .v > label{text-decoration:line-through;text-decoration-color:var(--line)}
+.check.done{padding-block:5px}
+.check.done .lb{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.check.done:not(.multi) .v{display:none}
+.check.two.done .v{display:flex}
+.check.two.done .v > label{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
 .check.now{background:var(--accent-soft)}
 .check.now .tm{color:var(--accent);font-weight:700}
 .go{align-self:flex-start;font-size:13px;color:var(--accent);background:none;border:1px solid var(--accent);padding:3px 10px;border-radius:99px;font-weight:600}
+.banner .go{color:var(--warn);border-color:var(--warn)}
+.tomorrow{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
 details.how summary{font-size:13px;color:var(--accent);cursor:pointer;width:max-content}
 details.how > div{font-size:13px;color:var(--muted);margin-top:6px}
 details.mv{border-top:1px solid var(--line);padding:6px 0}
@@ -96,9 +101,11 @@ details.how ol{font-size:13px;color:var(--muted);margin-top:6px;padding-left:18p
 .up{color:var(--warn)} .down{color:var(--accent)}
 .ex-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .ex-head .target{font-family:var(--f-num);font-size:17px;font-weight:600;color:var(--muted);white-space:nowrap}
+.eq{font-size:12px;color:var(--muted)}
 .last{font-size:13px;color:var(--muted)}
 .hint{font-size:13px;border-radius:8px;padding:6px 10px;background:var(--bg)}
 .hint.go2{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.hint.warn{background:var(--warn-soft);color:var(--warn);font-weight:600}
 .sets{display:flex;flex-direction:column;gap:6px}
 .set{display:grid;grid-template-columns:44px auto 18px auto 1fr;gap:6px;align-items:center}
 .set .lbl{font-size:12px;color:var(--muted)}
@@ -152,6 +159,15 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
   <div id="noStore" class="banner" hidden style="margin-top:12px">这个浏览器现在存不了记录，可能开了无痕模式。换成普通模式打开，勾选和数字才会保存。</div>
 
   <section class="tab" id="tab-today">
+    <div class="banner" id="iosTip" hidden>
+      <span>你现在是在 Safari 里用。Safari 和主屏幕图标里的记录是分开存的，建议点分享 → 添加到主屏幕，以后只从图标打开。</span>
+      <button type="button" class="link" id="iosTipClose" style="color:var(--warn)">知道了</button>
+    </div>
+    <div class="banner" id="backupNag" hidden>
+      <span id="backupNagText"></span>
+      <button type="button" class="go" data-go="body" data-to="dataCard">去备份</button>
+    </div>
+
     <div class="card" id="startCard" hidden>
       <h3 id="startTitle">从哪天开始？</h3>
       <p class="small" id="startText"></p>
@@ -165,7 +181,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
         <span id="qWaistWrap" class="row" hidden><input id="qWaist" type="number" inputmode="decimal" step="0.1" class="n" placeholder="腰围" aria-label="今天腰围（cm）"><span class="muted">cm</span></span>
         <button class="primary" id="qSave" type="button">记录</button>
       </div>
-      <p class="small muted" id="qWaistNote" hidden>今天量腰围：早上空腹，肚脐那一圈。</p>
+      <p class="small muted" id="qWaistNote" hidden>今天量腰围：早上空腹，肚脐那一圈，皮尺贴着皮肤别勒紧。</p>
       <p class="small" id="qErr" hidden style="color:var(--warn)"></p>
     </div>
 
@@ -175,6 +191,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
       <div class="bar"><i id="todayBar"></i></div>
       <div id="checklist"></div>
       <button type="button" class="link" id="toggleFull" hidden></button>
+      <p class="tomorrow" id="tomorrow" hidden></p>
     </div>
 
     <div class="row small muted" id="startInfo" hidden><span id="startInfoText"></span><button type="button" class="link" id="startChange">改开始日期</button></div>
@@ -182,10 +199,20 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
   </section>
 
   <section class="tab" id="tab-train" hidden>
+    <div class="row small muted"><span id="trainDateLabel"></span><button type="button" class="link" id="trainDateBtn"></button><input type="date" id="trainDate" hidden aria-label="补记哪天的训练"></div>
     <div class="chips" id="dayChips" role="group" aria-label="选择训练"></div>
     <div class="phase"><b id="phaseName"></b><span id="phaseText"></span></div>
     <div id="trainBody" style="display:flex;flex-direction:column;gap:12px"></div>
     <p class="small muted" id="saveState">填完次数会自动开始组间休息计时。漏练了不用补，下次接着练下一个。</p>
+    <div class="card">
+      <h3>什么时候停下</h3>
+      <ul class="small">
+        <li>关节刺痛、越练越疼，或者疼的地方不在练的肌肉上：停下，减重量或换动作；第二天还疼，这个部位先歇几天。</li>
+        <li>胸闷胸痛、头晕眼花、手脚发麻：马上停，坐下休息；不缓解就去医院。</li>
+        <li>练完 1–3 天肌肉酸胀是正常的，照常练，热身做足会好很多。</li>
+      </ul>
+      <p class="small muted">怎么判断"还剩几次"：最后一下明显变慢、但动作没变形，大概就是还剩 1–2 次。</p>
+    </div>
   </section>
 
   <section class="tab" id="tab-body" hidden>
@@ -196,17 +223,28 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
         <div class="stat"><span class="lab">目标区间</span><span class="big">64–66</span><span class="small muted">kg，以腰围为准</span></div>
       </div>
       <div class="chart" id="chart"></div>
+      <p class="stagenote" id="advice"></p>
       <p class="small muted">灰点是每天的称重，绿线是 7 天平均。单天上下差 1–2kg 很正常，只看绿线。</p>
+    </div>
+
+    <div class="card">
+      <h3>最近 7 天</h3>
+      <div class="stats">
+        <div class="stat"><span class="lab">训练</span><span class="big" id="wkTrain">–</span><span class="small muted">目标 5 次</span></div>
+        <div class="stat"><span class="lab">称重</span><span class="big" id="wkWeigh">–</span><span class="small muted">目标 7 天</span></div>
+        <div class="stat"><span class="lab">清单完成</span><span class="big" id="wkCheck">–</span><span class="small muted">每天平均</span></div>
+      </div>
     </div>
 
     <div class="card" id="dataCard">
       <h3>记录和备份</h3>
       <p class="small muted" id="backupInfo"></p>
-      <div class="row"><button type="button" class="primary" id="copyRecent">复制最近 2 周（发给 Claude）</button><button type="button" id="copyAll">复制完整备份</button></div>
+      <div class="row"><button type="button" class="primary" id="copyRecent">复制最近 2 周（发给 Claude）</button><button type="button" id="saveBackup">保存备份文件</button></div>
       <textarea id="dataBox" readonly hidden aria-label="复制的记录"></textarea>
       <button type="button" class="link" id="showImport">从备份恢复</button>
       <div id="importArea" hidden style="display:flex;flex-direction:column;gap:8px">
-        <textarea id="importBox" placeholder="把「复制完整备份」得到的文字粘贴到这里" aria-label="粘贴备份"></textarea>
+        <label class="small">选择备份文件：<input type="file" id="importFile" accept=".json,application/json,text/plain"></label>
+        <textarea id="importBox" placeholder="或者把备份的文字粘贴到这里" aria-label="粘贴备份"></textarea>
         <div class="row"><button type="button" class="primary" id="doImport">检查备份</button><button type="button" id="cancelImport">取消</button></div>
         <p class="small" id="importMsg" hidden></p>
         <div class="row" id="importConfirm" hidden><button type="button" class="primary" id="confirmImport">确定恢复</button></div>
@@ -225,19 +263,21 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
     </div>
 
     <div class="card">
-      <h3>什么时候调整</h3>
+      <h3>调整规则</h3>
       <dl class="kv">
         <dt>2 周没变化</dt><dd>体重和腰围都不降：每天少吃 150–200 千卡（约半碗饭 + 一勺油），或每天多走 2000 步</dd>
         <dt>掉得太快</dt><dd>每周掉超过 1%，力量下降、很累：每天加 150–200 千卡碳水</dd>
         <dt>秤不动腰在减</dt><dd>腰围在降、力量在涨：脂肪在减、肌肉在长，什么都别改</dd>
         <dt>欲望明显下降</dt><dd>连续两周欲望低、晨勃变少：每天加 200 千卡，或按维持热量吃一周</dd>
       </dl>
+      <p class="small muted">上面绿色框里的建议就是按这些规则自动算的；前两周体重波动大，先不调整。</p>
     </div>
 
     <div class="card">
       <h3>最近记录</h3>
       <div class="log" id="bodyLog"><p class="empty">还没有记录。开始那天早上空腹称一次，填在「今天」最上面。</p></div>
     </div>
+    <p class="small muted" id="verInfo"></p>
   </section>
 
   <section class="tab" id="tab-food" hidden>
@@ -248,6 +288,22 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
         <div class="stat"><span class="lab">有氧日、周日</span><span class="big">~1900</span><span class="small muted">千卡</span></div>
       </div>
       <p class="small muted">前两周先吃外卖或食堂，按下面的点法保证每餐有蛋白质；第 2 周的周日第一次备餐，第 3 周开始吃饭盒。</p>
+    </div>
+
+    <div class="card">
+      <h3>蛋白质怎么算</h3>
+      <div class="tablewrap"><table>
+        <thead><tr><th>吃的</th><th>大约蛋白质</th></tr></thead>
+        <tbody>
+          <tr><td>一掌心熟的肉、鱼、虾（约 100g，手掌大小、厚度）</td><td class="num">25 g</td></tr>
+          <tr><td>蛋白粉 1 勺</td><td class="num">20–25 g</td></tr>
+          <tr><td>北豆腐 200g（半盒）</td><td class="num">16 g</td></tr>
+          <tr><td>希腊酸奶 1 杯 / 普通无糖酸奶 1 杯</td><td class="num">10–15 g / 5 g</td></tr>
+          <tr><td>牛奶 250ml</td><td class="num">8 g</td></tr>
+          <tr><td>鸡蛋 1 个</td><td class="num">6 g</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">一天约 145g，大概就是：午饭、晚饭各 1.5 掌心的肉鱼虾，加上早餐的鸡蛋、牛奶、蛋白粉，再加一杯酸奶。米饭、面条里的蛋白质不算进去。</p>
     </div>
 
     <div class="card">
@@ -350,9 +406,17 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 
 <script>
 (function(){
+const VERSION = '2026-10-21.3';
 const WD = ['周日','周一','周二','周三','周四','周五','周六'];
 const SEQ = [1,2,4,5,6];
 const COMPOUND = new Set(['db_bench','incline_db','lat_pd','seated_row','hack','db_rdl','leg_press','assist_pu','one_arm_row','db_ohp','machine_press','hip_thrust','bss']);
+const ISO_DB = new Set(['lat_raise','rear_fly','incline_curl','db_curl']);
+const EQ = {db_bench:'db',incline_db:'db',lat_raise:'db',db_rdl:'db',one_arm_row:'db',db_ohp:'db',db_curl:'db',rear_fly:'db',incline_curl:'db',bss:'db',
+  hack:'plate',leg_press:'plate',calf:'plate',hip_thrust:'plate',
+  seated_curl:'stack',machine_press:'stack',lying_curl:'stack',leg_ext:'stack',lat_pd:'stack',seated_row:'stack',pushdown:'stack',cable_raise:'stack',face_pull:'stack',oh_ext:'stack',
+  assist_pu:'assist',crunch:'bw',plank:'time'};
+const INC = {db:'哑铃加最小的一档（通常每只 +2–2.5 kg）',plate:'加最小的片（通常 +2.5–5 kg）',stack:'配重加一档（通常 +2.5–5 kg）',assist:'辅助减一档（通常 −5 kg）',bw:'抱一片 2.5–5 kg 的杠铃片做'};
+const EQ_NOTE = {db:'重量记单只哑铃',assist:'重量记辅助配重：数字越小说明越强',bw:'徒手做，做满了再抱杠铃片'};
 const CUE = {
   db_bench:'肩胛骨往后夹、往下沉，全程不松；哑铃放到胸两侧，小臂垂直地面；推起时肩膀别往前顶。',
   incline_db:'凳子调到 30° 左右；肩胛骨后夹下沉；哑铃下放到上胸两侧，推起时别耸肩。',
@@ -381,6 +445,13 @@ const CUE = {
   rear_fly:'俯身约 45°，背平；手肘微屈，往两边打开；用后肩发力，别耸肩；重量要轻。',
   incline_curl:'凳子调到 45–60°，手臂自然垂在身后；大臂不动，只动小臂；下放到底。',
   oh_ext:'用绳索或哑铃；大臂贴在耳朵两边不动；下放到底再伸直。'
+};
+const ALT = {
+  db_bench:'器械推胸，或史密斯卧推',incline_db:'上斜器械推胸，或史密斯上斜卧推',lat_pd:'辅助引体向上',seated_row:'单臂哑铃划船，或器械划船',
+  lat_raise:'绳索侧平举',pushdown:'哑铃过头臂屈伸',hack:'史密斯深蹲，或高脚杯深蹲',db_rdl:'杠铃罗马尼亚硬拉（从空杆开始）',leg_press:'高脚杯深蹲',
+  seated_curl:'俯卧腿弯举',crunch:'绳索卷腹，或死虫',assist_pu:'高位下拉',one_arm_row:'坐姿划船，或器械划船',db_ohp:'器械推肩',machine_press:'哑铃卧推',
+  cable_raise:'哑铃侧平举',face_pull:'弹力带面拉，或反向飞鸟',db_curl:'绳索弯举',hip_thrust:'史密斯臀推，或哑铃臀桥',bss:'哑铃箭步蹲',lying_curl:'坐姿腿弯举',
+  leg_ext:'高脚杯深蹲（下放放慢）',calf:'史密斯提踵，或单腿提踵',plank:'死虫',rear_fly:'器械反向飞鸟，或面拉',incline_curl:'哑铃弯举',oh_ext:'绳索下压'
 };
 const E = (id,n,sets,lo,hi,o) => Object.assign({id,n,sets,lo,hi,unit:'次',noW:false,assist:false},o||{});
 const PLAN = {
@@ -432,7 +503,7 @@ const HOW_TEST = '<ol><li>靠墙站：脚跟离墙 5 cm，屁股、上背贴墙�
 const SHOP = [
   ['每周日买', [['w1','去皮鸡腿肉 800g'],['w2','鸡胸肉 500g'],['w3','牛腱 600g'],['w4','鸡蛋 30 个（够 1.5 周）'],['w5','无糖或希腊酸奶 7 杯'],['w6','北豆腐 1 盒'],['w7','红薯或紫薯 1.5kg'],['w8','土豆 2 个'],['w9','番茄 7 个'],['w10','胡萝卜 3 根'],['w11','青椒 3 个'],['w12','菠菜 1 小把（周一、周二吃完）'],['w13','香蕉 7 根，生熟搭配']]],
   ['一个月买一次', [['m1','大米 + 糙米（每周约 850g 生米）'],['m2','荞麦面 1 包'],['m3','常温纯牛奶 1 箱'],['m4','每日坚果'],['m5','乳清蛋白粉（2 磅约一个月）'],['m6','黑咖啡'],['m7','冷冻虾仁 500g'],['m8','冷冻蓝莓 1 袋'],['m9','冷冻西兰花 1kg']]],
-  ['工具（买一次）', [['t1','厨房秤'],['t2','能进微波炉的分格饭盒 10 个'],['t3','冷冻袋'],['t4','电压力锅'],['t5','空气炸锅'],['t6','料理机']]]
+  ['工具（买一次）', [['t1','厨房秤'],['t2','能进微波炉的分格饭盒 10 个'],['t3','冷冻袋'],['t4','电压力锅'],['t5','空气炸锅'],['t6','料理机'],['t7','软皮尺（量腰围）'],['t8','网球 1 个、弹力带 1 根（体态训练用）']]]
 ];
 const PREP = [
   ['p_home','加到手机主屏幕','苹果用 Safari、安卓用 Chrome 打开这个网址，分享或菜单里选「添加到主屏幕」。以后只从这个图标打开：浏览器里和图标里的记录是分开存的'],
@@ -456,15 +527,17 @@ const fmt1 = v => (Math.round(v*10)/10).toFixed(1);
 const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
 const num = v => v==='' || v==null ? null : Number(v);
 const mdLabel = s => { const [, m, d] = s.split('-'); return Number(m)+'月'+Number(d)+'日'; };
+const md = s => { const [, m, d] = s.split('-'); return Number(m)+'/'+Number(d); };
 const daysAgo = k => ymd(new Date(now0.getFullYear(), now0.getMonth(), now0.getDate()-k));
+const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const now0 = new Date();
 const TODAY = ymd(now0);
 const TODAY_WD = now0.getDay();
 const TOMORROW = ymd(new Date(now0.getFullYear(), now0.getMonth(), now0.getDate()+1));
-const state = { body:[], workouts:[], checks:{}, shop:{}, start:null, planDay:1, draft:null, full:false };
+const state = { body:[], workouts:[], checks:{}, shop:{}, start:null, planDay:1, trainDate:TODAY, draft:null, full:false };
 
-function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2000); }
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2200); }
 
 /* ---------- storage: everything lives in this browser's localStorage ---------- */
 const KEY = 'boji:v1';
@@ -493,15 +566,16 @@ function syncState(){
   state.shop = Object.assign({}, DB.shop || {});
 }
 function write(path, data, okMsg){
-  if (!storeOK){ toast('这个浏览器存不了记录（可能是无痕模式），换普通模式打开'); return; }
+  if (!storeOK){ toast('这个浏览器存不了记录（可能是无痕模式），换普通模式打开'); return false; }
   const [col, id] = path.split('/');
   if (col==='settings') DB.start = data.start || null;
   else if (col==='lists') DB.shop = Object.assign({}, data.checked || {});
   else { DB[col] = DB[col] || {}; DB[col][id] = data; }
-  if (!persist()) return;
+  if (!persist()) return false;
   syncState();
   if (okMsg) toast(okMsg);
-  if (col==='workouts'){ $('#saveState').textContent = '已保存 '+new Date().toTimeString().slice(0,5); renderPhase(); renderToday(); }
+  if (col==='workouts'){ $('#saveState').textContent = '已保存 '+new Date().toTimeString().slice(0,5); renderPhase(); renderToday(); renderBodyStats(); }
+  return true;
 }
 (function prune(){
   const cut = daysAgo(180); let changed = false;
@@ -522,8 +596,9 @@ $('#startSave').addEventListener('click', () => { const v = $('#startDate').valu
 
 /* ---------- workout rotation: the next session follows the last one logged ---------- */
 const hasReps = w => !!(w && w.sets && Object.values(w.sets).some(a => Array.isArray(a) && a.some(s => s && s.r)));
-function nextLiftDay(){
-  const done = state.workouts.filter(w => w.date < TODAY && SEQ.includes(w.day) && hasReps(w));
+function nextLiftDay(before){
+  const b = before || TODAY;
+  const done = state.workouts.filter(w => w.date < b && SEQ.includes(w.day) && hasReps(w));
   return done.length ? SEQ[(SEQ.indexOf(done[0].day)+1) % SEQ.length] : 1;
 }
 function todayLiftDay(){
@@ -559,7 +634,10 @@ function showTab(name){
 document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-go]'); if (!g) return;
-  if (g.dataset.go==='train'){ state.planDay = draftDirty() ? state.draft.day : defaultPlanDay(); renderChips(); renderTrain(); }
+  if (g.dataset.go==='train'){
+    if (state.trainDate !== TODAY) setTrainDate(TODAY);
+    else { state.planDay = draftDirty() ? state.draft.day : defaultPlanDay(); renderChips(); renderTrain(); }
+  }
   showTab(g.dataset.go);
   if (g.dataset.to){ const el = document.getElementById(g.dataset.to); if (el) setTimeout(() => el.scrollIntoView({block:'start'}), 0); }
 });
@@ -579,13 +657,13 @@ function todayItems(full){
   if (d===3) add('早上','train','07:00','有氧', st===1 ? '爬坡走或单车 30–45 分钟，别扶扶手' : PLAN[3].sub);
   add('早上','bf','08:40','早餐', st===1 ? '2 个鸡蛋 + 1 盒牛奶 + 1 根香蕉或 1 个红薯' : '水煮蛋 2 个 · 牛奶 250ml 冲蛋白粉 1 勺 · 红薯 200g · 蓝莓');
   if (d===0 && st >= 2) add('白天','shop','10:00','购物','按「备餐」里的清单买一周的菜', {go:['prep','打开清单']});
-  add('白天','lunch','12:00','午餐', boxes ? MENU[d][0] : '外卖或食堂：一掌心以上的肉、鱼、蛋或豆腐，主食一份，有青菜', boxes ? {} : {go:['food','怎么点']});
+  add('白天','lunch','12:00','午餐', boxes ? MENU[d][0] : '外卖或食堂：1.5 掌心的肉、鱼、蛋或豆腐，主食一份，有青菜', boxes ? {} : {go:['food','怎么点']});
   if (d===0 && st >= 2) add('白天','prep','15:00','备餐', st===2 ? '第一次备餐：做好下周 10 盒，约 2 小时' : '做好下周 10 盒，约 90 分钟', {go:['prep','看做法']});
   if (st >= 2) add('白天','snack','16:00','加餐','无糖酸奶 1 杯 + 坚果 1 小包');
   if (st >= 2) add('白天','water','全天','喝水','2.5–3 升，蔬菜吃够 300g');
   if (st >= 2) add('白天','kegel','全天','盆底肌','3 组，早上躺着、白天坐着、睡前各一组', {multi:3, how:HOW_KEGEL});
-  add('晚上','dinner','19:00','晚餐', boxes ? MENU[d][1] : '同午餐：一掌心以上的蛋白质，主食一份，多点青菜', boxes ? {} : {go:['food','怎么点']});
-  if (st >= 2) add('晚上','walk','19:40','快走','30–40 分钟，走到微微喘；看前方，下巴微收、沉肩、不挺肚子');
+  add('晚上','dinner','19:00','晚餐', boxes ? MENU[d][1] : '同午餐：1.5 掌心的蛋白质，主食一份，多点青菜', boxes ? {} : {go:['food','怎么点']});
+  if (st >= 2) add('晚上','walk','19:40','快走','30–40 分钟，走到微微喘，全天凑够 8000 步；看前方，下巴微收、沉肩、不挺肚子');
   else if (d===0) add('晚上','walk','19:40','散步','30 分钟，看前方，不看手机');
   if (d===0) add('晚上','review','21:00','周复盘','到「身体」点「复制最近 2 周」发给 Claude，顺便备份', {go:['body','去复制'], to:'dataCard', auto:'backup'});
   if (isTestDay()) add('晚上','ptest','21:20','体态自测', n===1 ? '4 个小测试，约 5 分钟，第一天留个底' : '4 个小测试，约 5 分钟', {how:HOW_TEST});
@@ -599,8 +677,8 @@ function todayItems(full){
 }
 const GNOTE = {'白天':'每 30 分钟起身 30–60 秒：收下巴、沉肩、走两步。站着时随时做三连：收下巴 → 沉肩 → 骨盆收回（轻收下腹、夹一点屁股）。坐到椅子深处靠住靠背，手肘搭在桌上，屏幕上沿和眼睛平齐，不翘二郎腿。'};
 function autoDone(it){
-  if (it.auto==='weigh'){ const t = state.body.find(e => e.date===TODAY); return !!(t && typeof t.weight==='number'); }
-  if (it.auto==='train') return hasReps(state.workouts.find(w => w.date===TODAY)) || hasReps(state.draft);
+  if (it.auto==='weigh'){ const t = (DB.body || {})[TODAY]; return !!(t && typeof t.weight==='number'); }
+  if (it.auto==='train') return hasReps((DB.workouts || {})[TODAY]) || !!(state.draft && state.draft.date===TODAY && hasReps(state.draft));
   if (it.auto==='backup') return DB.backupAt === TODAY;
   return false;
 }
@@ -613,7 +691,7 @@ function nowKey(items, c){
   return (past.length ? past[past.length-1] : open[0]).k;
 }
 function rowHtml(it, c, nk){
-  const done = isDone(it, c), auto = autoDone(it), cls = 'check'+(done?' done':'')+(it.k===nk?' now':'');
+  const done = isDone(it, c), auto = autoDone(it), cls = 'check'+(it.multi?' multi':'')+(done?' done':'')+(it.k===nk?' now':'');
   const how = it.how ? '<details class="how" data-keep="how:'+it.k+'"><summary>怎么做</summary>'+it.how+'</details>' : '';
   const go = it.go ? '<button type="button" class="go" data-go="'+it.go[0]+'"'+(it.to?' data-to="'+it.to+'"':'')+'>'+it.go[1]+'</button>' : '';
   const tm = '<span class="tm">'+it.time+(it.k===nk?' · 现在':'')+'</span><span class="lb">'+it.lab+'</span>';
@@ -624,6 +702,14 @@ function rowHtml(it, c, nk){
   }
   const box = '<input type="checkbox" id="ck-'+it.k+'" data-k="'+it.k+'"'+(done?' checked':'')+(auto?' disabled title="已自动完成"':'')+'>';
   return '<div class="'+cls+'">'+box+'<label class="t" for="ck-'+it.k+'">'+tm+'</label><div class="v"><label for="ck-'+it.k+'">'+esc(it.txt)+'</label>'+go+how+'</div></div>';
+}
+function tomorrowText(){
+  const tw = (TODAY_WD+1) % 7;
+  if (tw===3) return '明天：有氧日，爬坡走或单车。';
+  if (tw===0) return '明天：休息'+(stage() >= 2 ? '，上午买菜，下午备餐。' : '，散步就行。');
+  const t = (DB.workouts || {})[TODAY];
+  const next = hasReps(t) && SEQ.includes(t.day) ? SEQ[(SEQ.indexOf(t.day)+1) % SEQ.length] : (TODAY_WD===3 || TODAY_WD===0 ? nextLiftDay() : todayLiftDay());
+  return '明天练：'+PLAN[next].name+'。睡前把运动服、水杯放门口。';
 }
 function renderToday(){
   const st = stage(), c = state.checks || {}, list = $('#checklist');
@@ -636,7 +722,7 @@ function renderToday(){
     $('#startText').textContent = future ? '今晚把下面几件事准备好，第一天早上直接开始。' : '建议明天开始。第 1 周只做几件事：早上称体重、去健身房、三餐有蛋白质、睡前 4 分钟体态、23 点前睡。第 2 周加上体态训练、盆底肌和饭后快走，周日第一次备餐。第 3 周起按完整计划走。';
     $('#startBtns').hidden = future;
     $('#todayTitle').textContent = future ? '今晚准备' : '开始前准备';
-    $('#stageNote').hidden = true; $('#toggleFull').hidden = true;
+    $('#stageNote').hidden = true; $('#toggleFull').hidden = true; $('#tomorrow').hidden = true;
     list.innerHTML = '<div class="checklist">'+PREP.map(([k,lab,txt]) => '<div class="check two'+(c[k]?' done':'')+'"><input type="checkbox" id="ck-'+k+'" data-k="'+k+'"'+(c[k]?' checked':'')+'><div class="v"><label for="ck-'+k+'"><b>'+lab+'</b>　<span class="muted">'+txt+'</span></label></div></div>').join('')+'</div>';
     const n = PREP.filter(i => c[i[0]]).length;
     $('#todayCount').textContent = n+' / '+PREP.length;
@@ -661,11 +747,21 @@ function renderToday(){
     $('#todayCount').textContent = n+' / '+items.length;
     $('#todayBar').style.width = (n/items.length*100)+'%';
     lastNk = nk;
+    const rec = (DB.checks || {})[TODAY];
+    if (storeOK && (!rec || rec.done !== n || rec.total !== items.length)){ DB.checks = DB.checks || {}; DB.checks[TODAY] = {date:TODAY, items: rec && rec.items ? rec.items : {}, done:n, total:items.length}; persist(); }
+    const showTomorrow = new Date().getHours() >= 19;
+    $('#tomorrow').hidden = !showTomorrow;
+    if (showTomorrow) $('#tomorrow').textContent = tomorrowText();
   }
   open.forEach(k => { const el = Array.from(list.querySelectorAll('details[data-keep]')).find(x => x.dataset.keep===k); if (el) el.open = true; });
   $('#qWaistWrap').hidden = !isWaistDay(); $('#qWaistNote').hidden = !isWaistDay();
   $('#startInfo').hidden = !state.start;
   if (state.start) $('#startInfoText').textContent = '开始日期：'+mdLabel(state.start)+(dayNo() > 0 ? '，今天是第 '+dayNo()+' 天' : '');
+  const recs = Object.keys(DB.body || {}).length + Object.values(DB.workouts || {}).filter(hasReps).length;
+  const since = DB.backupAt ? dnum(TODAY) - dnum(DB.backupAt) : null;
+  const nag = st >= 1 && recs >= 3 && (since === null || since >= 7);
+  $('#backupNag').hidden = !nag;
+  if (nag) $('#backupNagText').textContent = (since === null ? '还没备份过。' : '已经 '+since+' 天没备份了。')+'记录只存在这台手机上，花 10 秒备份一下。';
   renderAvgMini();
 }
 function toggleCheck(k, on){
@@ -677,6 +773,12 @@ function toggleCheck(k, on){
 $('#checklist').addEventListener('change', e => { const k = e.target.dataset.k; if (k) toggleCheck(k, e.target.checked); });
 $('#checklist').addEventListener('click', e => { const b = e.target.closest('.pill[data-k]'); if (b) toggleCheck(b.dataset.k, b.getAttribute('aria-pressed')!=='true'); });
 $('#toggleFull').addEventListener('click', () => { state.full = !state.full; try { localStorage.setItem('boji-full', state.full ? '1' : '0'); } catch(e){} renderToday(); });
+const IOS_BROWSER = /iP(hone|ad|od)/.test(navigator.userAgent) && navigator.standalone === false;
+(function(){
+  let off = false; try { off = localStorage.getItem('boji-iostip')==='off'; } catch(e){}
+  $('#iosTip').hidden = !(IOS_BROWSER && !off);
+  $('#iosTipClose').addEventListener('click', () => { try { localStorage.setItem('boji-iostip','off'); } catch(e){} $('#iosTip').hidden = true; });
+})();
 
 /* ---------- body ---------- */
 function bodySorted(){ return state.body.slice().sort((a,b)=>a.date<b.date?-1:1); }
@@ -701,7 +803,7 @@ function saveBody(date, weight, waist, errEl){
 }
 $('#qSave').addEventListener('click', () => { saveBody(TODAY, num($('#qWeight').value), isWaistDay() ? num($('#qWaist').value) : null, $('#qErr')); });
 ['#qWeight','#qWaist'].forEach(s => $(s).addEventListener('input', () => $('#qErr').hidden = true));
-$('#bDate').value = TODAY;
+$('#bDate').value = TODAY; $('#bDate').max = TODAY;
 $('#bSave').addEventListener('click', () => {
   const ok = saveBody($('#bDate').value || TODAY, num($('#bWeight').value), num($('#bWaist').value), $('#bErr'));
   if (ok){ $('#bWeight').value=''; $('#bWaist').value=''; }
@@ -710,6 +812,38 @@ $('#bSave').addEventListener('click', () => {
 function delta(el, d, unit){
   if (d===null){ el.textContent=''; el.className='small muted'; return; }
   el.textContent = '比上周 '+(d>0?'+':'')+fmt1(d)+' '+unit; el.className = 'small '+(d>0.05?'up':d<-0.05?'down':'muted');
+}
+function adviceText(){
+  const list = bodySorted().filter(e => typeof e.weight==='number');
+  if (list.length < 2) return '记满两周体重，这里会按调整规则自动给出建议。';
+  if (dayNo() > 0 && dayNo() <= 14) return '前两周体重会因为水分和肌糖原上下波动，先不调整，坚持每天称。';
+  const end = dnum(TODAY), win = (a,b) => list.filter(e => dnum(e.date) <= end-a && dnum(e.date) > end-b);
+  const avg = arr => arr.reduce((s,e)=>s+e.weight,0)/arr.length;
+  const w1 = win(0,7), w2 = win(7,14), w3 = win(14,21);
+  if (w1.length < 3 || w2.length < 3) return '最近两周每周称重不到 3 次，还判断不了趋势。每天早上称一次就行。';
+  const a1 = avg(w1), a2 = avg(w2), rate = (a1-a2)/a2*100;
+  const waists = bodySorted().filter(e => typeof e.waist==='number');
+  const wNow = waists[waists.length-1], wOld = waists.filter(e => dnum(e.date) <= end-13).slice(-1)[0];
+  const waistDown = !!(wNow && wOld && wNow.date !== wOld.date && wNow.waist - wOld.waist <= -0.5);
+  const head = '这周平均 '+fmt1(a1)+' kg，比上周 '+(rate>0?'+':'')+rate.toFixed(1)+'%。';
+  if (rate < -1.0) return head+'掉得偏快。如果力量在下降或总觉得累，每天加 150–200 千卡碳水（约多半碗饭）。';
+  if (rate <= -0.3) return head+'速度合适，保持现在的吃法和训练。';
+  if (w3.length >= 3){
+    const rate2 = (a1-avg(w3))/avg(w3)*100;
+    if (rate2 > -0.5) return head+(waistDown ? '体重两周没怎么动，但腰围在降，说明脂肪在减、肌肉在长，保持。' : '体重两周几乎没降：每天少吃 150–200 千卡（约半碗饭 + 一勺油），或每天多走 2000 步。');
+  }
+  return head+'这周慢了一点，再观察一周。';
+}
+function renderBodyStats(){
+  const from = daysAgo(6);
+  const sessions = state.workouts.filter(w => w.date >= from && w.date <= TODAY && hasReps(w)).length;
+  const weighs = state.body.filter(e => e.date >= from && e.date <= TODAY && typeof e.weight==='number').length;
+  const span = state.start ? Math.max(0, Math.min(7, dayNo())) : 0;
+  const cs = Object.values(DB.checks || {}).filter(c => c.date >= from && c.date <= TODAY && c.total);
+  $('#wkTrain').textContent = sessions;
+  $('#wkWeigh').textContent = weighs;
+  $('#wkCheck').textContent = span ? Math.round(cs.reduce((s,c) => s + c.done/c.total, 0) / span * 100)+'%' : '–';
+  $('#verInfo').textContent = '页面版本 '+VERSION+' · 共记录 '+Object.keys(DB.body || {}).length+' 天体重、'+Object.values(DB.workouts || {}).filter(hasReps).length+' 次训练';
 }
 function renderBody(){
   const list = bodySorted();
@@ -724,12 +858,13 @@ function renderBody(){
   if (w && pw){ const d = w.waist-pw.waist; $('#sWaistD').textContent = '比上次 '+(d>0?'+':'')+fmt1(d)+' cm'; $('#sWaistD').className='small '+(d>0.05?'up':d<-0.05?'down':'muted'); }
   else { $('#sWaistD').textContent = w ? 'cm' : '每周量一次'; $('#sWaistD').className='small muted'; }
   $('#chart').innerHTML = chartSvg(list);
+  $('#advice').textContent = adviceText();
   const recent = list.slice(-21).reverse();
   $('#bodyLog').innerHTML = recent.length ? recent.map(e => {
     const [y,m,d] = e.date.split('-');
     return '<div><span>'+Number(m)+'月'+Number(d)+'日 <span class="muted small">'+WD[new Date(+y,+m-1,+d).getDay()]+'</span></span><span class="num">'+(typeof e.weight==='number'?fmt1(e.weight)+' kg':'')+'</span><span class="num muted">'+(typeof e.waist==='number'?fmt1(e.waist)+' cm':'')+'</span></div>';
   }).join('') : '<p class="empty">还没有记录。开始那天早上空腹称一次，填在「今天」最上面。</p>';
-  renderBackupInfo();
+  renderBackupInfo(); renderBodyStats();
 }
 function chartSvg(list){
   const pts = list.filter(e => typeof e.weight==='number').slice(-42);
@@ -746,18 +881,18 @@ function chartSvg(list){
   pts.forEach(p => { s += '<circle class="dot" cx="'+x(dnum(p.date)).toFixed(1)+'" cy="'+y(p.weight).toFixed(1)+'" r="3"/>'; });
   s += '<polyline class="avg" points="'+avg.map(a => x(a[0]).toFixed(1)+','+y(a[1]).toFixed(1)).join(' ')+'"/>';
   const e = avg[avg.length-1]; s += '<circle class="end" cx="'+x(e[0]).toFixed(1)+'" cy="'+y(e[1]).toFixed(1)+'" r="4.5"/>';
-  const lab = d => { const [, m, dd] = d.split('-'); return Number(m)+'/'+Number(dd); };
-  s += '<text class="lab" x="'+pl+'" y="'+(H-6)+'">'+lab(pts[0].date)+'</text><text class="lab" x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end">'+lab(pts[pts.length-1].date)+'</text>';
+  s += '<text class="lab" x="'+pl+'" y="'+(H-6)+'">'+md(pts[0].date)+'</text><text class="lab" x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end">'+md(pts[pts.length-1].date)+'</text>';
   return s + '</svg>';
 }
 
 /* ---------- backup ---------- */
 function renderBackupInfo(){
-  $('#backupInfo').textContent = '记录只存在这台手机的这个浏览器里，换手机、清浏览器数据就没了。上次备份：'+(DB.backupAt ? mdLabel(DB.backupAt) : '还没有')+'。每周日复制一次发给 Claude，既是复盘也是备份。';
+  $('#backupInfo').textContent = '记录只存在这台手机的这个浏览器里，换手机、清浏览器数据就没了。上次备份：'+(DB.backupAt ? mdLabel(DB.backupAt) : '还没有')+'。每周日复制一次发给 Claude，既是复盘也是备份；换手机前点「保存备份文件」。';
 }
+function markBackup(){ DB.backupAt = TODAY; persist(); renderBackupInfo(); renderToday(); }
 function pickSince(o, since){ const r = {}; Object.keys(o || {}).forEach(k => { if (k >= since) r[k] = o[k]; }); return r; }
-function recentText(){ return JSON.stringify({type:'薄肌计划·最近两周', exported:TODAY, start:DB.start, body:pickSince(DB.body, daysAgo(27)), workouts:pickSince(DB.workouts, daysAgo(13)), checks:pickSince(DB.checks, daysAgo(13))}); }
-function fullText(){ return JSON.stringify({type:'薄肌计划·完整备份', exported:TODAY, v:1, start:DB.start, body:DB.body, workouts:DB.workouts, checks:DB.checks, shop:DB.shop, backupAt:DB.backupAt}); }
+function recentText(){ return JSON.stringify({type:'薄肌计划·最近两周', version:VERSION, exported:TODAY, start:DB.start, body:pickSince(DB.body, daysAgo(27)), workouts:pickSince(DB.workouts, daysAgo(13)), checks:pickSince(DB.checks, daysAgo(13))}); }
+function fullText(){ return JSON.stringify({type:'薄肌计划·完整备份', version:VERSION, exported:TODAY, v:1, start:DB.start, body:DB.body, workouts:DB.workouts, checks:DB.checks, shop:DB.shop, backupAt:DB.backupAt}); }
 function copyOut(text, okMsg){
   const box = $('#dataBox');
   const fallback = () => { box.value = text; box.hidden = false; box.focus(); box.select(); toast('自动复制没成功：长按下面的文字，全选后复制'); };
@@ -765,20 +900,41 @@ function copyOut(text, okMsg){
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => { box.hidden = true; toast(okMsg); }, fallback);
     else fallback();
   } catch(e){ fallback(); }
-  DB.backupAt = TODAY; persist(); renderBackupInfo(); renderToday();
+  markBackup();
 }
 $('#copyRecent').addEventListener('click', () => copyOut(recentText(), '已复制最近 2 周，粘贴发给 Claude 就行'));
-$('#copyAll').addEventListener('click', () => copyOut(fullText(), '已复制完整备份，存到备忘录或发给 Claude'));
+$('#saveBackup').addEventListener('click', () => {
+  const text = fullText(), name = 'boji-backup-'+TODAY+'.json';
+  try {
+    const file = new File([text], name, {type:'application/json'});
+    if (navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], title:'薄肌计划备份'}).then(() => { markBackup(); toast('备份已保存'); }, err => { if (!err || err.name !== 'AbortError') copyOut(text, '已复制完整备份，存到备忘录里'); });
+      return;
+    }
+  } catch(e){}
+  try {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type:'application/json'})); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+    markBackup(); toast('备份文件已下载：'+name);
+  } catch(e){ copyOut(text, '已复制完整备份，存到备忘录里'); }
+});
 let pendingImport = null;
 function importMsg(t, bad){ const m = $('#importMsg'); m.textContent = t; m.hidden = false; m.style.color = bad ? 'var(--warn)' : ''; }
 $('#showImport').addEventListener('click', () => { $('#importArea').hidden = false; $('#showImport').hidden = true; });
-$('#cancelImport').addEventListener('click', () => { $('#importArea').hidden = true; $('#showImport').hidden = false; $('#importConfirm').hidden = true; $('#importMsg').hidden = true; $('#importBox').value = ''; pendingImport = null; });
+$('#cancelImport').addEventListener('click', () => { $('#importArea').hidden = true; $('#showImport').hidden = false; $('#importConfirm').hidden = true; $('#importMsg').hidden = true; $('#importBox').value = ''; $('#importFile').value = ''; pendingImport = null; });
 $('#importBox').addEventListener('input', () => { $('#importConfirm').hidden = true; $('#importMsg').hidden = true; pendingImport = null; });
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { $('#importBox').value = String(r.result || ''); $('#doImport').click(); };
+  r.onerror = () => importMsg('文件读不出来，换成粘贴文字试试。', true);
+  r.readAsText(f);
+});
 $('#doImport').addEventListener('click', () => {
   let o = null;
-  try { o = JSON.parse($('#importBox').value.trim()); } catch(e){ return importMsg('这段文字不是完整的备份。请粘贴「复制完整备份」得到的全部文字。', true); }
-  if (!o || typeof o !== 'object' || typeof o.body !== 'object' || typeof o.workouts !== 'object') return importMsg('这段文字不是完整的备份。请粘贴「复制完整备份」得到的全部文字。', true);
-  if (String(o.type || '').indexOf('最近两周') >= 0) return importMsg('这是「最近 2 周」的记录，不能用来恢复。请用「复制完整备份」。', true);
+  try { o = JSON.parse($('#importBox').value.trim()); } catch(e){ return importMsg('这不是完整的备份。请用「保存备份文件」得到的文件，或它里面的全部文字。', true); }
+  if (!o || typeof o !== 'object' || typeof o.body !== 'object' || typeof o.workouts !== 'object') return importMsg('这不是完整的备份。请用「保存备份文件」得到的文件，或它里面的全部文字。', true);
+  if (String(o.type || '').indexOf('最近两周') >= 0) return importMsg('这是「最近 2 周」的记录，不能用来恢复。请用「保存备份文件」得到的完整备份。', true);
   pendingImport = o;
   importMsg('备份里有 '+Object.keys(o.body).length+' 天体重、'+Object.keys(o.workouts).length+' 次训练'+(o.start ? '，开始日期 '+mdLabel(o.start) : '')+'。恢复后会覆盖这台手机上现在的记录。');
   $('#importConfirm').hidden = false;
@@ -787,7 +943,7 @@ $('#confirmImport').addEventListener('click', () => {
   const o = pendingImport; if (!o) return;
   DB.start = o.start || null; DB.body = o.body || {}; DB.workouts = o.workouts || {}; DB.checks = o.checks || {}; DB.shop = o.shop || {}; DB.backupAt = o.backupAt || null;
   if (!persist()) return;
-  syncState(); state.draft = null; loadDraft();
+  syncState(); state.trainDate = TODAY; state.draft = null; loadDraft();
   renderAll();
   $('#cancelImport').click();
   toast('已恢复');
@@ -795,7 +951,7 @@ $('#confirmImport').addEventListener('click', () => {
 
 /* ---------- train ---------- */
 function renderChips(){
-  const order = [1,2,4,5,6,3,0], mark = defaultPlanDay();
+  const order = [1,2,4,5,6,3,0], mark = state.trainDate===TODAY ? defaultPlanDay() : null;
   $('#dayChips').innerHTML = order.map(d => '<button type="button" class="chip" data-day="'+d+'" aria-pressed="'+(state.planDay===d)+'">'+(d===mark?'今天 · ':'')+PLAN[d].name+'</button>').join('');
 }
 $('#dayChips').addEventListener('click', e => {
@@ -803,41 +959,59 @@ $('#dayChips').addEventListener('click', e => {
   state.planDay = Number(b.dataset.day); renderChips(); renderTrain();
   if (state.draft) state.draft.day = state.planDay;
 });
-function ensureDraft(){ if (!state.draft) state.draft = {date:TODAY, day:state.planDay, sets:{}}; return state.draft; }
+function renderTrainDate(){
+  const today = state.trainDate===TODAY;
+  $('#trainDateLabel').textContent = today ? '记录今天的训练' : '正在补记 '+mdLabel(state.trainDate)+' 的训练';
+  $('#trainDateBtn').textContent = today ? '补记前几天' : '回到今天';
+}
+$('#trainDateBtn').addEventListener('click', () => {
+  if (state.trainDate !== TODAY){ setTrainDate(TODAY); return; }
+  const inp = $('#trainDate'); inp.max = TODAY; inp.value = daysAgo(1); inp.hidden = false;
+  try { inp.showPicker && inp.showPicker(); } catch(e){ inp.focus(); }
+});
+$('#trainDate').addEventListener('change', e => { const v = e.target.value; if (!v || v > TODAY) return; e.target.hidden = true; setTrainDate(v); });
+function setTrainDate(d){ flushSave(); state.trainDate = d; state.draft = null; loadDraft(); renderTrainDate(); renderChips(); renderTrain(); }
+function ensureDraft(){ if (!state.draft) state.draft = {date:state.trainDate, day:state.planDay, sets:{}}; return state.draft; }
 const draftDirty = () => !!(state.draft && Object.keys(state.draft.sets).length);
 function loadDraft(){
-  const t = (DB.workouts || {})[TODAY];
-  if (t && t.sets){ state.draft = {date:TODAY, day: typeof t.day==='number' ? t.day : defaultPlanDay(), sets: JSON.parse(JSON.stringify(t.sets))}; state.planDay = state.draft.day; }
-  else state.planDay = defaultPlanDay();
+  const t = (DB.workouts || {})[state.trainDate];
+  if (t && t.sets){ state.draft = {date:state.trainDate, day: typeof t.day==='number' ? t.day : defaultPlanDay(), sets: JSON.parse(JSON.stringify(t.sets))}; state.planDay = state.draft.day; }
+  else { state.draft = null; state.planDay = state.trainDate===TODAY ? defaultPlanDay() : nextLiftDay(state.trainDate); }
 }
-function lastFor(exId){
+function histFor(exId, k){
+  const out = [];
   for (const w of state.workouts){
-    if (w.date >= TODAY) continue;
+    if (w.date >= state.trainDate) continue;
     const arr = w.sets && w.sets[exId];
-    if (Array.isArray(arr) && arr.some(s => s && s.r)) return {date:w.date, sets:arr.filter(s => s && s.r)};
+    if (Array.isArray(arr) && arr.some(s => s && s.r)){ out.push({date:w.date, sets:arr.filter(s => s && s.r)}); if (out.length >= k) break; }
   }
-  return null;
+  return out.reverse();
 }
-function lastText(ex, last){
-  if (!last) return '还没有记录';
-  const [, m, d] = last.date.split('-'), when = '上次 '+Number(m)+'/'+Number(d)+'：';
-  const reps = last.sets.map(s => s.r).join(' / ');
-  if (ex.noW) return when+reps+' 秒';
-  const w = last.sets.map(s => s.w).filter(Boolean);
-  const pre = ex.assist ? '辅助 ' : '';
-  if (w.length && w.every(v => v===w[0])) return when+pre+w[0]+' kg × '+reps;
-  return when+pre+last.sets.map(s => (s.w||'–')+'×'+s.r).join('  ');
+function histText(ex, hist){
+  if (!hist.length) return '还没有记录';
+  const one = h => {
+    const reps = h.sets.map(s => s.r).join('/');
+    if (ex.noW) return md(h.date)+' '+reps+' 秒';
+    const ws = h.sets.map(s => s.w).filter(Boolean), same = ws.length && ws.every(v => v===ws[0]);
+    return md(h.date)+' '+(same ? ws[0]+'kg×'+reps : h.sets.map(s => (s.w||'–')+'×'+s.r).join(' '));
+  };
+  return (hist.length > 1 ? '近 '+hist.length+' 次：' : '上次：')+hist.map(one).join(' → ');
 }
-function hintFor(ex, last){
+function hintFor(ex, hist){
+  const last = hist.length ? hist[hist.length-1] : null, eq = EQ[ex.id];
   if (!last){
-    if (ex.noW) return {go:false, t:'第一次：尽量撑满 45 秒，动作别变形'};
-    return {go:false, t:'第一次：选一个能做到 '+ex.hi+' 次、还剩 2–3 次余力的'+(ex.assist?'辅助重量':'重量')};
+    if (ex.noW) return {cls:'', t:'第一次：尽量撑满 45 秒，动作别变形'};
+    if (eq==='bw') return {cls:'', t:'第一次：徒手做到 '+ex.hi+' 次，动作慢一点'};
+    return {cls:'', t:'第一次：选一个能做到 '+ex.hi+' 次、还剩 2–3 次余力的'+(ex.assist?'辅助重量':'重量')};
   }
-  if (ex.noW) return {go:false, t:'目标：每组比上次多撑 5–10 秒，到 60 秒后换更难的做法'};
-  const need = Math.min(3, setsFor(ex));
-  if (last.sets.length >= need && last.sets.every(s => Number(s.r) >= ex.hi))
-    return {go:true, t:'上次每组都做满 '+ex.hi+' 次：这次'+(ex.assist?'辅助减一档':'加一档重量')+'，次数回到 '+ex.lo+' 次'};
-  return {go:false, t:'目标：同样重量，至少一组比上次多做 1 次'};
+  if (ex.noW) return {cls:'', t:'目标：每组比上次多撑 5–10 秒，到 60 秒后换更难的做法'};
+  const reps = last.sets.map(s => Number(s.r)), low = reps.filter(r => r < ex.lo).length;
+  if (low >= 2) return {cls:'warn', t:'上次有 '+low+' 组没做到 '+ex.lo+' 次：这次'+(ex.assist ? '辅助加一档' : '重量减一档')+'，先把每组做到 '+ex.lo+' 次以上'};
+  if (last.sets.length >= Math.min(3, setsFor(ex)) && reps.every(r => r >= ex.hi)){
+    const tip = ISO_DB.has(ex.id) ? '；加一档太重的话，先把次数做到 '+ex.hi+' 次以上再加' : '';
+    return {cls:'go2', t:'上次每组都做满 '+ex.hi+' 次：这次'+INC[eq]+'，次数回到 '+ex.lo+' 次'+tip};
+  }
+  return {cls:'', t:'目标：同样重量，至少一组比上次多做 1 次'};
 }
 const restFor = ex => ex.noW ? 60 : COMPOUND.has(ex.id) ? 150 : 75;
 const restText = ex => ex.noW ? '组间休息 1 分钟' : COMPOUND.has(ex.id) ? '组间休息 2–3 分钟' : '组间休息 60–90 秒';
@@ -846,7 +1020,7 @@ function renderTrain(){
   if (!p.ex.length){ body.innerHTML = '<div class="card"><h3>'+p.name+'</h3><p class="muted">'+esc(p.sub)+'</p></div>'; return; }
   const dr = ensureDraft();
   body.innerHTML = p.ex.map((ex, k) => {
-    const vals = dr.sets[ex.id] || [], last = lastFor(ex.id), n = setsFor(ex);
+    const vals = dr.sets[ex.id] || [], hist = histFor(ex.id, 3), last = hist.length ? hist[hist.length-1] : null, n = setsFor(ex);
     const rows = Array.from({length:n}, (_, i) => {
       const v = vals[i] || {}, ls = last ? (last.sets[i] || last.sets[0]) : null, lw = ls ? ls.w : '';
       const wph = lw ? lw : (ex.assist ? '辅助kg' : 'kg');
@@ -856,19 +1030,21 @@ function renderTrain(){
         '<input class="n" type="number" inputmode="numeric" step="1" id="r-'+ex.id+'-'+i+'" data-ex="'+ex.id+'" data-i="'+i+'" data-f="r" value="'+esc(v.r||'')+'" placeholder="'+rng+'" aria-label="'+esc(ex.n)+' 第 '+(i+1)+' 组'+ex.unit+'数"><span class="u">'+(ex.noW?'秒':'')+'</span></div>';
     }).join('');
     const warm = k===0 ? '<p class="small muted">先做今天清单里的「热身」（第 1 周只骑 5 分钟单车），再用轻重量做 2 组：10 次，然后 5 次。</p>' : '';
-    return '<div class="card"><div class="ex-head"><h3>'+esc(ex.n)+'</h3><span class="target">'+n+' × '+(ex.lo===ex.hi?ex.lo:ex.lo+'–'+ex.hi)+(ex.noW?' 秒':'')+'</span></div>'+warm+
+    const note = EQ_NOTE[EQ[ex.id]] ? '<p class="eq">'+EQ_NOTE[EQ[ex.id]]+'</p>' : '';
+    const alt = ALT[ex.id] ? '<div>器械被占用就换：'+esc(ALT[ex.id])+'。</div>' : '';
+    return '<div class="card" id="ex-'+ex.id+'"><div class="ex-head"><h3>'+esc(ex.n)+'</h3><span class="target">'+n+' × '+(ex.lo===ex.hi?ex.lo:ex.lo+'–'+ex.hi)+(ex.noW?' 秒':'')+'</span></div>'+note+warm+
       '<p class="last" data-last="'+ex.id+'"></p><p class="hint" data-hint="'+ex.id+'"></p>'+
-      '<details class="how"><summary>动作要点</summary><div>'+esc(CUE[ex.id]||'')+'</div></details>'+
+      '<details class="how"><summary>动作要点</summary><div>'+esc(CUE[ex.id]||'')+'</div>'+alt+'</details>'+
       '<div class="sets">'+rows+'</div><p class="small muted">'+restText(ex)+'</p></div>';
   }).join('') + '<div class="card"><h3>练完</h3><p class="muted">'+esc(p.after)+'</p></div>';
   updateLastInfo();
 }
 function updateLastInfo(){
   PLAN[state.planDay].ex.forEach(ex => {
-    const last = lastFor(ex.id), h = hintFor(ex, last);
+    const hist = histFor(ex.id, 3), h = hintFor(ex, hist);
     const le = document.querySelector('[data-last="'+ex.id+'"]'), he = document.querySelector('[data-hint="'+ex.id+'"]');
-    if (le) le.textContent = lastText(ex, last);
-    if (he){ he.textContent = h.t; he.className = 'hint'+(h.go?' go2':''); }
+    if (le) le.textContent = histText(ex, hist);
+    if (he){ he.textContent = h.t; he.className = 'hint'+(h.cls?' '+h.cls:''); }
   });
 }
 function updateDraft(exId, i, f, v){
@@ -878,12 +1054,12 @@ function updateDraft(exId, i, f, v){
   for (let k = 0; k < arr.length; k++) if (!arr[k]) arr[k] = {w:'', r:''};
   dr.sets = Object.assign({}, dr.sets, {[exId]: arr});
 }
-let saveTimer = null;
-function scheduleSave(){
-  $('#saveState').textContent = '正在保存…';
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => { const dr = state.draft; write('workouts/'+TODAY, {date:TODAY, day:dr.day, sets:dr.sets}); }, 600);
-}
+let saveTimer = null, savePending = false;
+function doSave(){ savePending = false; const dr = state.draft; if (dr) write('workouts/'+dr.date, {date:dr.date, day:dr.day, sets:dr.sets}); }
+function scheduleSave(){ savePending = true; $('#saveState').textContent = '正在保存…'; clearTimeout(saveTimer); saveTimer = setTimeout(doSave, 500); }
+function flushSave(){ if (savePending){ clearTimeout(saveTimer); doSave(); } }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState==='hidden') flushSave(); });
+window.addEventListener('pagehide', flushSave);
 $('#trainBody').addEventListener('input', e => {
   const t = e.target; if (!t.dataset.ex) return;
   updateDraft(t.dataset.ex, Number(t.dataset.i), t.dataset.f, t.value.trim());
@@ -896,9 +1072,13 @@ $('#trainBody').addEventListener('change', e => {
     for (let j = i+1; j < n; j++){ const el = document.getElementById('w-'+ex.id+'-'+j); if (el && !el.value){ el.value = t.value.trim(); updateDraft(ex.id, j, 'w', el.value); } }
     scheduleSave(); return;
   }
-  renderToday();
+  flushSave(); renderToday();
   if (i+1 < n) startRest(restFor(ex), ex.n+' 第 '+(i+2)+' 组');
-  else if (p.ex[idx+1]) startRest(restFor(ex), p.ex[idx+1].n+' 第 1 组');
+  else if (p.ex[idx+1]){
+    startRest(restFor(ex), p.ex[idx+1].n+' 第 1 组');
+    const nextCard = document.getElementById('ex-'+p.ex[idx+1].id);
+    if (nextCard) setTimeout(() => nextCard.scrollIntoView({behavior: reduceMotion() ? 'auto' : 'smooth', block:'start'}), 300);
+  }
   else { stopRest(); toast('力量部分练完了，'+p.after); }
 });
 
@@ -958,7 +1138,7 @@ $('#shopReset').addEventListener('click', () => {
 });
 
 /* ---------- boot ---------- */
-function renderAll(){ renderPhase(); renderToday(); renderBody(); renderChips(); renderTrain(); renderShop(); }
+function renderAll(){ renderPhase(); renderToday(); renderBody(); renderTrainDate(); renderChips(); renderTrain(); renderShop(); }
 try { state.full = localStorage.getItem('boji-full')==='1'; } catch(e){}
 syncState(); loadDraft(); renderAll();
 if (!storeOK) $('#noStore').hidden = false;
@@ -967,12 +1147,12 @@ try { const s = localStorage.getItem('boji-tab'); if (s && document.getElementBy
 const h = (location.hash || '').slice(1); if (h && document.getElementById('tab-'+h)) startTab = h;
 showTab(startTab);
 setInterval(() => {
-  if (ymd(new Date()) !== TODAY) { try { location.reload(); } catch(e){} return; }
+  if (ymd(new Date()) !== TODAY) { flushSave(); try { location.reload(); } catch(e){} return; }
   const st = stage(); if (!st) return;
   const nk = nowKey(todayItems(state.full && st < 3), state.checks);
-  if (nk !== lastNk) renderToday();
+  if (nk !== lastNk || (new Date().getHours() === 19 && new Date().getMinutes() === 0)) renderToday();
 }, 60000);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState==='visible' && ymd(new Date()) !== TODAY) { try { location.reload(); } catch(e){} } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState==='visible' && ymd(new Date()) !== TODAY) { flushSave(); try { location.reload(); } catch(e){} } });
 window.addEventListener('storage', e => {
   if (e.key !== KEY || !e.newValue) return;
   try { const o = JSON.parse(e.newValue); Object.keys(o).forEach(k => DB[k] = o[k]); } catch(err){ return; }
