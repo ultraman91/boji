@@ -529,6 +529,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
         <li><b>酒和烟</b>：一次喝多当晚就会影响，长期喝降睾酮；烟直接伤血管。</li>
         <li><b>锌、维生素 D</b>：只有缺的时候补才有用，体检时查一下维生素 D。</li>
       </ul>
+      <a class="link" href="docs.html?d=xing#12-睾酮营养和生活方式">睾酮和营养：需要哪些营养素、怎么吃、怎么补 →</a>
     </div>
 
     <div class="card">
@@ -578,7 +579,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 
 <script>
 (function(){
-const VERSION = '2026-11-17.3';
+const VERSION = '2026-11-17.4';
 // ?fast=1 只用来测试盆底肌跟练（时间加快 20 倍）
 const SPEED = new URLSearchParams(location.search).get('fast') ? 20 : 1;
 // 看示范视频：跳到 B 站搜索，国内能直接打开
@@ -1651,9 +1652,12 @@ function hintFor(ex, hist){
 const restFor = ex => ex.noW ? 60 : COMPOUND.has(ex.id) ? 150 : 75;
 const restText = ex => ex.noW ? '组间休息 1 分钟' : COMPOUND.has(ex.id) ? '组间休息 2–3 分钟' : '组间休息 60–90 秒';
 // 每个训练日对应的详细文档（docs.html）
-const DOC_OF = {1:['jian','这天的详细做法：宽肩文档'], 2:['tui','这天的详细做法：腿、臀、核心文档'], 3:['tui#6-髋的灵活性','有氧后的拉伸做髋活动度'],
-  4:['jian','这天的详细做法：宽肩文档'], 5:['tui','这天的详细做法：腿、臀、核心文档'], 6:['jian','这天的详细做法：宽肩文档']};
+const DOC_OF = {1:['jian','这天的详细做法：宽肩文档'], 2:['tui','这天的详细做法：腿、臀、髋、核心文档'], 3:['tui#64-髋活动度','有氧后的拉伸做髋活动度'],
+  4:['jian','这天的详细做法：宽肩文档'], 5:['tui','这天的详细做法：腿、臀、髋、核心文档'], 6:['jian','这天的详细做法：宽肩文档']};
 const docLink = day => DOC_OF[day] ? '<a class="link" href="docs.html?d='+DOC_OF[day][0]+'">'+DOC_OF[day][1]+' →</a>' : '';
+// 个别动作的「动作要点」里再给一个文档链接
+const EX_DOC = {db_rdl:['tui#61-髋铰链最重要的动作模式','髋铰链怎么一步步学'], back_ext:['tui#61-髋铰链最重要的动作模式','髋铰链怎么一步步学']};
+const exDocLink = id => EX_DOC[id] ? ' <a class="link" href="docs.html?d='+EX_DOC[id][0]+'">'+EX_DOC[id][1]+' →</a>' : '';
 function renderTrain(){
   const p = PLAN[state.planDay], body = $('#trainBody');
   if (!p.ex.length){ body.innerHTML = '<div class="card"><h3>'+p.name+'</h3><p class="muted">'+esc(p.sub)+'</p>'+docLink(state.planDay)+'</div>'; return; }
@@ -1673,7 +1677,7 @@ function renderTrain(){
     const alt = ALT[ex.id] ? '<div>器械被占用就换：'+esc(ALT[ex.id])+'。</div>' : '';
     return '<div class="card" id="ex-'+ex.id+'"><div class="ex-head"><h3>'+esc(ex.n)+'</h3><span class="target">'+n+' × '+(ex.lo===ex.hi?ex.lo:ex.lo+'–'+ex.hi)+(ex.noW?' 秒':'')+'</span></div>'+note+warm+
       '<p class="last" data-last="'+ex.id+'"></p><p class="hint" data-hint="'+ex.id+'"></p>'+
-      '<details class="how"><summary>动作要点</summary><div>'+esc(CUE[ex.id]||'')+' '+demoLink(ex.id)+'</div>'+alt+'</details>'+
+      '<details class="how"><summary>动作要点</summary><div>'+esc(CUE[ex.id]||'')+' '+demoLink(ex.id)+exDocLink(ex.id)+'</div>'+alt+'</details>'+
       '<div class="sets">'+rows+'</div><p class="small muted">'+restText(ex)+(POSE[ex.id] ? ' · <a class="link" href="pose.html?ex='+POSE[ex.id]+'">拍视频检查动作</a>' : '')+'</p></div>';
   }).join('') + '<div class="card"><h3>练完</h3><p class="muted">'+esc(p.after)+'</p></div>';
   updateLastInfo();
