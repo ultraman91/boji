@@ -235,7 +235,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
   </section>
 
   <section class="tab" id="tab-train" hidden>
-    <div class="row small muted"><span id="trainDateLabel"></span><button type="button" class="link" id="trainDateBtn"></button><input type="date" id="trainDate" hidden aria-label="补记哪天的训练"><a class="link" href="pose.html" style="margin-left:auto">拍视频分析动作 →</a></div>
+    <div class="row small muted"><span id="trainDateLabel"></span><button type="button" class="link" id="trainDateBtn"></button><input type="date" id="trainDate" hidden aria-label="补记哪天的训练"><a class="link" href="docs.html" style="margin-left:auto">文档</a><a class="link" href="pose.html">拍视频分析动作 →</a></div>
     <div class="chips" id="dayChips" role="group" aria-label="选择训练"></div>
     <div class="phase"><b id="phaseName"></b><span id="phaseText"></span></div>
     <div id="trainBody" style="display:flex;flex-direction:column;gap:12px"></div>
@@ -486,6 +486,11 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 
   <section class="tab" id="tab-energy" hidden>
     <div class="card">
+      <div class="spread"><h3>性能力完整文档</h3><a class="link" href="docs.html?d=xing">打开 →</a></div>
+      <p class="small muted">原理和自测、盆底肌（收紧、放松、耐力）、心肺和血管、兴奋度觉察、单人停-动和挤压、呼吸和心态、和伴侣的实战技巧、辅助和药物、12 周计划。打开过一次后断网也能看。</p>
+    </div>
+
+    <div class="card">
       <div class="spread"><h3>盆底肌跟练</h3><span class="small muted" id="kgWeek"></span></div>
       <p class="small muted" id="kgPlan"></p>
       <div class="kgbox"><span class="cue" id="kgCue">准备好了就点开始</span><span class="cnt2" id="kgCount"></span><span class="small muted" id="kgStep"></span></div>
@@ -535,6 +540,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
         <li><b>盆底肌坚持 12 周</b>：一项早泄研究里，约八成的人学会了控制。</li>
         <li><b>还有两个事实</b>：插入到射精时间的中位数大约 5.4 分钟；只有约 18% 的女性仅靠插入就能高潮，时长不是伴侣满不满意的关键。</li>
       </ol>
+      <a class="link" href="docs.html?d=xing#7-单人训练停-动降速挤压">完整的 8 个阶段、挤压法、和伴侣怎么练 →</a>
     </div>
 
     <div class="card">
@@ -572,7 +578,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 
 <script>
 (function(){
-const VERSION = '2026-11-17.1';
+const VERSION = '2026-11-17.2';
 // ?fast=1 只用来测试盆底肌跟练（时间加快 20 倍）
 const SPEED = new URLSearchParams(location.search).get('fast') ? 20 : 1;
 // 看示范视频：跳到 B 站搜索，国内能直接打开
@@ -1644,11 +1650,15 @@ function hintFor(ex, hist){
 }
 const restFor = ex => ex.noW ? 60 : COMPOUND.has(ex.id) ? 150 : 75;
 const restText = ex => ex.noW ? '组间休息 1 分钟' : COMPOUND.has(ex.id) ? '组间休息 2–3 分钟' : '组间休息 60–90 秒';
+// 每个训练日对应的详细文档（docs.html）
+const DOC_OF = {1:['jian','这天的详细做法：宽肩文档'], 2:['tui','这天的详细做法：腿、臀、核心文档'], 3:['tui#6-髋的灵活性','有氧后的拉伸做髋活动度'],
+  4:['jian','这天的详细做法：宽肩文档'], 5:['tui','这天的详细做法：腿、臀、核心文档'], 6:['jian','这天的详细做法：宽肩文档']};
+const docLink = day => DOC_OF[day] ? '<a class="link" href="docs.html?d='+DOC_OF[day][0]+'">'+DOC_OF[day][1]+' →</a>' : '';
 function renderTrain(){
   const p = PLAN[state.planDay], body = $('#trainBody');
-  if (!p.ex.length){ body.innerHTML = '<div class="card"><h3>'+p.name+'</h3><p class="muted">'+esc(p.sub)+'</p></div>'; return; }
+  if (!p.ex.length){ body.innerHTML = '<div class="card"><h3>'+p.name+'</h3><p class="muted">'+esc(p.sub)+'</p>'+docLink(state.planDay)+'</div>'; return; }
   const dr = ensureDraft();
-  body.innerHTML = p.ex.map((ex, k) => {
+  body.innerHTML = (DOC_OF[state.planDay] ? '<p class="small">'+docLink(state.planDay)+'</p>' : '') + p.ex.map((ex, k) => {
     const vals = dr.sets[ex.id] || [], hist = histFor(ex.id, 3), last = hist.length ? hist[hist.length-1] : null, n = setsFor(ex);
     const rows = Array.from({length:n}, (_, i) => {
       const v = vals[i] || {}, ls = last ? (last.sets[i] || last.sets[0]) : null, lw = ls ? ls.w : '';
