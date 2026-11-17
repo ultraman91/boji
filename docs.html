@@ -12,7 +12,8 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <style>
-/* Layout: one phone-width reading column; sticky header with a back link; markdown rendered into .doc */
+/* Layout: one phone-width reading column; sticky header with a back link; markdown rendered into .doc.
+   tools/export-docs.cjs reuses this <style> block for the local copies. */
 :root{
   --bg:#F2F5F3; --surface:#FFFFFF; --fg:#15201B; --muted:#5B6A63; --line:#D9E1DC;
   --accent:#1C7553; --accent-fg:#FFFFFF; --accent-soft:#E0F0E8; --warn:#9A5D0B; --warn-soft:#FAEFD9;
@@ -73,6 +74,7 @@ a{color:var(--accent)}
 .more a{font-weight:600;text-decoration:none}
 .fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;font:inherit;font-size:14px;font-weight:600;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--accent);padding:8px 16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media print{.top,.fab{display:none}.wrap{max-width:none;padding:0}.doc .tablewrap{overflow:visible}}
 </style>
 </head>
 <body>
@@ -86,137 +88,30 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 </div>
 <button type="button" class="fab" id="fab" hidden>目录</button>
 
+<script src="docs-render.js"></script>
 <script>
 (function(){
 // 每份文档的源文件在 docs/ 下，和私仓里 app/docs/ 是同一份 Markdown
 const DOCS = [
   {id:'xing', file:'docs/性能力.md', title:'性能力', back:'index.html#energy',
-   sub:'原理和自测、盆底肌（收紧、放松、耐力）、心肺和血管、兴奋度觉察、单人停-动和挤压、呼吸和心态、和伴侣的实战技巧、辅助和药物、12 周计划'},
+   sub:'原理和自测、盆底肌（收紧、放松、耐力）、心肺和血管、兴奋度觉察、单人停-动和挤压、呼吸和心态、和伴侣的实战技巧、安全套、辅助和药物、12 周计划'},
   {id:'tui', file:'docs/腿臀核心.md', title:'腿、臀、核心', back:'index.html#train',
-   sub:'每个动作怎么做到位、核心的四个方向、髋活动度、爆发力、第 9 周起的升级版和自测'},
+   sub:'健身房速查、每个动作怎么做到位、核心的四个方向、髋和踝活动度、爆发力、第 10 周起的升级版和自测'},
   {id:'jian', file:'docs/宽肩.md', title:'宽肩', back:'index.html#train',
-   sub:'三角肌中束、后束、背阔肌、圆肩和腰围：怎么练、怎么推进、怎么看效果'}
+   sub:'健身房速查、三角肌中束、后束、背阔肌、圆肩和腰围：怎么练、怎么推进、怎么看效果'}
 ];
 const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const unesc = s => s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&amp;/g,'&');
+const {render, withToc, esc} = window.BojiDocs;
 
-/* ---------- a small Markdown renderer: headings, paragraphs, nested lists, tables, quotes, code ---------- */
-const LIST_RE = /^( *)([-*+]|\d{1,3}[.)])[ \t]+(.*)$/;
-const lead = l => l.match(/^ */)[0].length;
-const CJK = /[⺀-鿿豈-﫿＀-￯]/;
-function joinLines(arr){ return arr.reduce((a, b) => a + (CJK.test(a.slice(-1)) && CJK.test(b[0] || '') ? '' : ' ') + b); }
-function mapHref(u){
-  const raw = unesc(u);
+// 文档里的链接：别的文档 → 文档页；网址 → 新窗口；私仓里的其他文件网页上没有，只显示文字
+function mapHref(raw){
   const m = raw.match(/^(?:\.\/)?([^/?#]+\.md)(#.*)?$/);
   if (m){ const d = DOCS.find(x => x.file === 'docs/'+m[1]); return d ? {href:'docs.html?d='+d.id+(m[2] || ''), ext:false} : null; }
   if (/^https?:\/\//.test(raw)) return {href:raw, ext:true};
   if (raw[0] === '#' || /^(index|pose|docs)\.html/.test(raw)) return {href:raw, ext:false};
-  return null; // 私仓里的其他文件，网页上没有，只显示文字
-}
-function linkHtml(text, u){
-  const h = mapHref(u);
-  if (!h) return text;
-  return '<a href="'+esc(h.href)+'"'+(h.ext ? ' target="_blank" rel="noopener"' : '')+'>'+text+'</a>';
-}
-function inline(s){
-  let o = esc(s);
-  o = o.replace(/`([^`]+)`/g, '<code>$1</code>');
-  o = o.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-  o = o.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, u) => linkHtml(t, u));
-  o = o.replace(/&lt;(https?:\/\/[^\s<>]+?)&gt;/g, (m, u) => linkHtml(u, u));
-  return o;
-}
-const isTableAt = (lines, i) => /^ *\|/.test(lines[i]) && i + 1 < lines.length && /^ *\|? *:?-{3,}/.test(lines[i+1]);
-function isBlockStart(lines, i){
-  const l = lines[i];
-  return /^#{1,4} /.test(l) || /^ *```/.test(l) || /^ *(-{3,}|\*{3,}|_{3,}) *$/.test(l) || /^ *>/.test(l) || LIST_RE.test(l) || isTableAt(lines, i);
-}
-function cells(row){ let s = row.trim(); if (s[0] === '|') s = s.slice(1); if (s.slice(-1) === '|') s = s.slice(0, -1); return s.split('|').map(c => c.trim()); }
-function table(rows){
-  const head = cells(rows[0]), body = rows.slice(2).map(cells);
-  return '<div class="tablewrap"><table><thead><tr>'+head.map(c => '<th>'+inline(c)+'</th>').join('')+'</tr></thead><tbody>'+
-    body.map(r => '<tr>'+head.map((_, k) => '<td>'+inline(r[k] || '')+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
-}
-function list(lines, i, ctx){
-  const m0 = lines[i].match(LIST_RE), base = m0[1].length, ordered = /\d/.test(m0[2]);
-  const startNo = ordered ? parseInt(m0[2], 10) : 1, items = [];
-  while (i < lines.length){
-    if (!lines[i].trim()){
-      let j = i + 1; while (j < lines.length && !lines[j].trim()) j++;
-      const mj = j < lines.length && lines[j].match(LIST_RE);
-      if (mj && mj[1].length === base && /\d/.test(mj[2]) === ordered){ i = j; continue; }
-      break;
-    }
-    const m = lines[i].match(LIST_RE);
-    if (!m || m[1].length !== base || /\d/.test(m[2]) !== ordered) break;
-    const cIndent = base + m[2].length + 1, buf = [m[3]];
-    i++;
-    while (i < lines.length){
-      const l = lines[i];
-      if (!l.trim()){
-        let j = i + 1; while (j < lines.length && !lines[j].trim()) j++;
-        if (j < lines.length && lead(lines[j]) > base){ buf.push(''); i++; continue; }
-        break;
-      }
-      const ld = lead(l);
-      if (ld > base){ buf.push(l.slice(Math.min(ld, cIndent))); i++; continue; }
-      break;
-    }
-    items.push(buf);
-  }
-  const tag = ordered ? 'ol' : 'ul';
-  const html = (ordered && startNo !== 1 ? '<ol start="'+startNo+'">' : '<'+tag+'>') +
-    items.map(b => '<li>'+(b.slice(1).some(x => x.trim()) ? blocks(b, ctx) : inline(b[0]))+'</li>').join('') + '</'+tag+'>';
-  return {html, next:i};
-}
-function slug(text, used){
-  const s = text.trim().toLowerCase().replace(/[^\p{L}\p{N}\p{M}\s_-]/gu, '').replace(/\s/g, '-');
-  let out = s || 'h', n = 1;
-  while (used.has(out)) out = s + '-' + (n++);
-  used.add(out); return out;
-}
-function blocks(lines, ctx){
-  let html = '', i = 0;
-  while (i < lines.length){
-    const line = lines[i];
-    if (!line.trim()){ i++; continue; }
-    if (/^ *```/.test(line)){
-      const buf = []; i++;
-      while (i < lines.length && !/^ *```/.test(lines[i])){ buf.push(lines[i]); i++; }
-      i++; html += '<pre><code>'+esc(buf.join('\n'))+'</code></pre>'; continue;
-    }
-    const hm = line.match(/^(#{1,4}) +(.+?) *#* *$/);
-    if (hm){
-      const lv = hm[1].length, inner = inline(hm[2]), text = unesc(inner.replace(/<[^>]+>/g, ''));
-      const id = slug(text, ctx.used);
-      if (lv === 2) ctx.toc.push({id, text});
-      if (lv === 1 && !ctx.title) ctx.title = text;
-      html += '<h'+lv+' id="'+esc(id)+'">'+inner+'</h'+lv+'>'; i++; continue;
-    }
-    if (/^ *(-{3,}|\*{3,}|_{3,}) *$/.test(line)){ html += '<hr>'; i++; continue; }
-    if (isTableAt(lines, i)){
-      const rows = []; while (i < lines.length && /^ *\|/.test(lines[i])){ rows.push(lines[i]); i++; }
-      html += table(rows); continue;
-    }
-    if (/^ *>/.test(line)){
-      const buf = []; while (i < lines.length && /^ *>/.test(lines[i])){ buf.push(lines[i].replace(/^ *> ?/, '')); i++; }
-      html += '<blockquote>'+blocks(buf, ctx)+'</blockquote>'; continue;
-    }
-    if (LIST_RE.test(line)){ const r = list(lines, i, ctx); html += r.html; i = r.next; continue; }
-    const buf = [];
-    while (i < lines.length && lines[i].trim() && (buf.length === 0 || !isBlockStart(lines, i))){ buf.push(lines[i].trim()); i++; }
-    html += '<p>'+inline(joinLines(buf))+'</p>';
-  }
-  return html;
-}
-function render(md){
-  const ctx = {used:new Set(), toc:[], title:''};
-  const html = blocks(md.replace(/\r\n?/g, '\n').replace(/\t/g, '    ').split('\n'), ctx);
-  return {html, toc:ctx.toc, title:ctx.title};
+  return null;
 }
 
-/* ---------- pages ---------- */
 function showIndex(){
   document.title = '文档 · 薄肌计划';
   $('#main').innerHTML = '<div class="list">'+
@@ -249,14 +144,13 @@ async function showDoc(d){
     $('#main').innerHTML = '<p class="state">没打开：现在没网，而且这份文档之前没打开过。联网后打开一次，之后断网也能看。</p>';
     return;
   }
-  const r = render(md);
+  const r = render(md, mapHref);
   document.title = (r.title || d.title)+' · 薄肌计划';
-  const toc = r.toc.length ? '<details class="toc" id="toc" open><summary>目录</summary><ul>'+r.toc.map(t => '<li><a href="#'+esc(t.id)+'">'+esc(t.text)+'</a></li>').join('')+'</ul></details>' : '';
   const others = DOCS.filter(x => x.id !== d.id).map(x => '<a href="docs.html?d='+x.id+'">'+esc(x.title)+' →</a>').join('');
-  $('#main').innerHTML = '<article class="doc">'+r.html.replace(/(<\/h1>[\s\S]*?)(<h2|$)/, (m, a, b) => a + toc + b)+'</article>'+
+  $('#main').innerHTML = '<article class="doc">'+withToc(r)+'</article>'+
     '<div class="more"><span class="muted small">其他文档</span>'+others+'<a href="'+esc(d.back)+'">← 回到打卡页面</a></div>';
-  const fab = $('#fab');
-  if (toc){
+  if (r.toc.length){
+    const fab = $('#fab');
     fab.hidden = false;
     fab.addEventListener('click', () => { const t = $('#toc'); t.open = true; t.scrollIntoView({block:'start'}); window.scrollBy(0, -70); });
   }
