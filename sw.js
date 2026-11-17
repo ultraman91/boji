@@ -1,7 +1,7 @@
 // 页面先走网络，断网时用上次缓存的；这样健身房信号差也能打开。
 // pose/ 下面是动作分析的识别模型（约 20MB），不会变，先用缓存，省流量。
-const CACHE = 'boji-v10';
-const SHELL = ['./', './index.html', './pose.html', './pose-core.js', './docs.html', './docs-render.js', './docs/性能力.md', './docs/腿臀核心.md', './docs/宽肩.md', './manifest.webmanifest', './icon-180.png', './icon-192.png'];
+const CACHE = 'boji-v11';
+const SHELL = ['./', './index.html', './pose.html', './pose-core.js', './docs.html', './docs-render.js', './docs/训练方法.md', './docs/胸背手臂.md', './docs/腿臀核心.md', './docs/宽肩.md', './docs/性能力.md', './docs/解剖学.md', './manifest.webmanifest', './icon-180.png', './icon-192.png'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();

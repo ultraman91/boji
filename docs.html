@@ -93,12 +93,18 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 (function(){
 // 每份文档的源文件在 docs/ 下，和私仓里 app/docs/ 是同一份 Markdown
 const DOCS = [
-  {id:'xing', file:'docs/性能力.md', title:'性能力', back:'index.html#energy',
-   sub:'原理和自测、盆底肌（收紧、放松、耐力）、心肺和血管、睾酮和营养（怎么吃、怎么补）、兴奋度觉察、单人停-动和挤压、呼吸和心态、和伴侣的实战技巧、安全套、辅助和药物、12 周计划'},
+  {id:'fa', file:'docs/训练方法.md', title:'训练方法和计划', back:'index.html#train',
+   sub:'最重要的 7 条、每组练到多累、练多少、怎么加重量、省时间的超级组、卡住和忙的时候怎么办、一周总表、一年怎么走、新手常见错误'},
+  {id:'xiong', file:'docs/胸背手臂.md', title:'胸、背、手臂', back:'index.html#train',
+   sub:'健身房速查、卧推和上斜卧推、划船、二头和三头、推的动作和圆肩、第 10 周起的升级版和自测'},
   {id:'tui', file:'docs/腿臀核心.md', title:'腿、臀、髋、核心', back:'index.html#train',
    sub:'健身房速查、每个动作怎么做到位、髋铰链怎么学、髋的力量和稳定、核心的四个方向、髋和踝活动度、爆发力、第 10 周起的升级版和自测'},
   {id:'jian', file:'docs/宽肩.md', title:'宽肩', back:'index.html#train',
-   sub:'健身房速查、三角肌中束、后束、背阔肌、圆肩和腰围：怎么练、怎么推进、怎么看效果'}
+   sub:'健身房速查、三角肌中束、后束、背阔肌、圆肩和腰围：怎么练、怎么推进、怎么看效果'},
+  {id:'xing', file:'docs/性能力.md', title:'性能力', back:'index.html#energy',
+   sub:'原理和自测、盆底肌（收紧、放松、耐力）、心肺和血管、睾酮和营养（怎么吃、怎么补）、兴奋度觉察、单人停-动和挤压、呼吸和心态、和伴侣的实战技巧、安全套、辅助和药物、12 周计划'},
+  {id:'jie', file:'docs/解剖学.md', title:'健身解剖学', back:'index.html#train',
+   sub:'够用版：5 个规律、上半身、核心、下半身每块肌肉在哪、管什么、练它的动作、怎么找感觉；用解剖学看懂计划和体态'}
 ];
 const $ = s => document.querySelector(s);
 const {render, withToc, esc} = window.BojiDocs;

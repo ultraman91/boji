@@ -579,7 +579,7 @@ nav.tabs button[aria-current="page"]::before{content:"";position:absolute;top:0;
 
 <script>
 (function(){
-const VERSION = '2026-11-17.4';
+const VERSION = '2026-11-17.5';
 // ?fast=1 只用来测试盆底肌跟练（时间加快 20 倍）
 const SPEED = new URLSearchParams(location.search).get('fast') ? 20 : 1;
 // 看示范视频：跳到 B 站搜索，国内能直接打开
@@ -1652,9 +1652,15 @@ function hintFor(ex, hist){
 const restFor = ex => ex.noW ? 60 : COMPOUND.has(ex.id) ? 150 : 75;
 const restText = ex => ex.noW ? '组间休息 1 分钟' : COMPOUND.has(ex.id) ? '组间休息 2–3 分钟' : '组间休息 60–90 秒';
 // 每个训练日对应的详细文档（docs.html）
-const DOC_OF = {1:['jian','这天的详细做法：宽肩文档'], 2:['tui','这天的详细做法：腿、臀、髋、核心文档'], 3:['tui#64-髋活动度','有氧后的拉伸做髋活动度'],
-  4:['jian','这天的详细做法：宽肩文档'], 5:['tui','这天的详细做法：腿、臀、髋、核心文档'], 6:['jian','这天的详细做法：宽肩文档']};
-const docLink = day => DOC_OF[day] ? '<a class="link" href="docs.html?d='+DOC_OF[day][0]+'">'+DOC_OF[day][1]+' →</a>' : '';
+const DOC_OF = {
+  1:['这天的详细做法：', [['xiong','胸、背、手臂'], ['jian','宽肩']]],
+  2:['这天的详细做法：', [['tui','腿、臀、髋、核心']]],
+  3:['有氧后的拉伸：', [['tui#64-髋活动度','髋活动度']]],
+  4:['这天的详细做法：', [['xiong','胸、背、手臂'], ['jian','宽肩']]],
+  5:['这天的详细做法：', [['tui','腿、臀、髋、核心']]],
+  6:['这天的详细做法：', [['jian','宽肩'], ['xiong#6-手臂','手臂']]]
+};
+const docLink = day => DOC_OF[day] ? DOC_OF[day][0] + DOC_OF[day][1].map(([d, t]) => '<a class="link" href="docs.html?d='+d+'">'+t+' →</a>').join(' · ') : '';
 // 个别动作的「动作要点」里再给一个文档链接
 const EX_DOC = {db_rdl:['tui#61-髋铰链最重要的动作模式','髋铰链怎么一步步学'], back_ext:['tui#61-髋铰链最重要的动作模式','髋铰链怎么一步步学']};
 const exDocLink = id => EX_DOC[id] ? ' <a class="link" href="docs.html?d='+EX_DOC[id][0]+'">'+EX_DOC[id][1]+' →</a>' : '';
